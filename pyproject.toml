@@ -1,0 +1,67 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mlflow-mltf-gateway"
+dynamic = ["version"]
+description = ''
+readme = "README.md"
+requires-python = ">=3.8"
+license = "MIT"
+keywords = []
+authors = [
+  { name = "Andrew Melo", email = "andrew.melo@gmail.com" },
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+]
+dependencies = ["mlflow-skinny", "jinja2", "requests"]
+
+[project.urls]
+Documentation = "https://github.com/PerilousApricot/mlflow-mltf-gateway#readme"
+Issues = "https://github.com/PerliousApricot/mlflow-mltf-gateway/issues"
+Source = "https://github.com/PerilousApricot/mlflow-mltf-gateway"
+
+[project.entry-points."mlflow.project_backend"]
+gateway = "mlflow_mltf_gateway.gateway_backend:gateway_backend_builder"
+
+[project.scripts]
+mltf = "mlflow_mltf_gateway.scripts:main"
+
+[tool.hatch.version]
+path = "src/mlflow_mltf_gateway/__about__.py"
+
+[tool.hatch.envs.types]
+extra-dependencies = [
+  "mypy>=1.0.0",
+]
+[tool.hatch.envs.types.scripts]
+check = "mypy --install-types --non-interactive {args:src/mlflow_mltf_gateway tests}"
+
+[tool.coverage.run]
+source_pkgs = ["mlflow_mltf_gateway", "tests"]
+branch = true
+parallel = true
+omit = [
+  "src/mlflow_mltf_gateway/__about__.py",
+]
+
+[tool.coverage.paths]
+mlflow_mltf_gateway = ["src/mlflow_mltf_gateway", "*/mlflow-mltf-gateway/src/mlflow_mltf_gateway"]
+tests = ["tests", "*/mlflow-mltf-gateway/tests"]
+
+[tool.coverage.report]
+exclude_lines = [
+  "no cov",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+]
