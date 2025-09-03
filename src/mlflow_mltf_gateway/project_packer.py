@@ -5,6 +5,7 @@ import tarfile
 import tempfile
 import urllib.parse
 
+
 def prepare_tarball(url):
     """
     Given a URL to a workspace, generate a tarball to upload to the gateway.
@@ -21,8 +22,8 @@ def prepare_tarball(url):
     file_catalog = {}
     for root, dirs, files in os.walk(parsed_url.path):
         relative_root = os.path.relpath(root, parsed_url.path)
-        if relative_root == '.' and 'mlruns' in dirs:
-            dirs.remove('mlruns')
+        if relative_root == "." and "mlruns" in dirs:
+            dirs.remove("mlruns")
         if "__pycache__" in dirs:
             dirs.remove("__pycache__")
         if ".git" in dirs:
@@ -42,6 +43,7 @@ def prepare_tarball(url):
             file_catalog[relative_path] = (info.st_size, info.st_mtime, absolute_path)
     return file_catalog
 
+
 def produce_tarball(file_catalog):
     """
     With given file catalog, write a tarball with the user environment.
@@ -57,14 +59,15 @@ def produce_tarball(file_catalog):
         with tarfile.TarFile(fileobj=nf, mode="w") as tf:
             # Put some metadata at the front of the tarball
             with tempfile.NamedTemporaryFile(buffering=0) as meta:
-                meta_info = {'file_catalog': file_catalog}
-                meta.write(json.dumps(meta_info).encode('utf-8'))
-                tf.add(name=meta.name, arcname='./.mltf_meta')
+                meta_info = {"file_catalog": file_catalog}
+                meta.write(json.dumps(meta_info).encode("utf-8"))
+                tf.add(name=meta.name, arcname="./.mltf_meta")
             # Sorting the filenames makes it so the shorter filenames are added first, hopefully making it so the
             # MLProject and env files are "earlier" in the tarfile, so the server has to do less searching
             for f in sorted(file_catalog.keys()):
                 tf.add(name=file_catalog[f][2], arcname=f, recursive=False)
         return nf.name
+
 
 def package_project(url):
     """
@@ -75,5 +78,10 @@ def package_project(url):
     """
     return produce_tarball(prepare_tarball(url))
 
-if __name__ == '__main__':
-    print(package_project("/Users/meloam/projects/mltf-gateway/client/mlflow-mltf-gateway"))
+
+if __name__ == "__main__":
+    print(
+        package_project(
+            "/Users/meloam/projects/mltf-gateway/client/mlflow-mltf-gateway"
+        )
+    )

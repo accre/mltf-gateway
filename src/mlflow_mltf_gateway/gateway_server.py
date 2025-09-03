@@ -250,7 +250,7 @@ class SLURMExecutor(ExecutorBase):
     # Needs to be configurable
     # For some reason, /home doesn't work here on MacOS because of something
     # with realpath()
-    shared_paths = ["/panfs/", "/cvmfs/", "/home",os.path.expanduser("~")]
+    shared_paths = ["/panfs/", "/cvmfs/", "/home", os.path.expanduser("~")]
 
     def __init__(self):
         # Where files should be spooled. Should become configurable

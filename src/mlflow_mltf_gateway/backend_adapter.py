@@ -51,7 +51,7 @@ class LocalAdapter(BackendAdapter):
 
     gw = None
 
-    def __init__(self, *, debug_gateway = None):
+    def __init__(self, *, debug_gateway=None):
         self.gw = debug_gateway if debug_gateway else self.return_or_load_gateway()
         if not self.gw:
             raise RuntimeError("MLTF local gateway unavailable in this environment")
@@ -107,4 +107,3 @@ class LocalAdapter(BackendAdapter):
         )
         ret = GatewaySubmittedRun(self, run_reference.index)
         return ret
-

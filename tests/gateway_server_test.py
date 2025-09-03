@@ -11,7 +11,8 @@ from mlflow_mltf_gateway.gateway_server import (
     GatewayServer,
     get_script,
     MovableFileReference,
-    SLURMExecutor, GatewaySubmittedRun,
+    SLURMExecutor,
+    GatewaySubmittedRun,
 )
 
 
@@ -66,7 +67,9 @@ class GatewayServerTest(unittest.TestCase):
         ret = srv.enqueue_run("", tarball, "", {}, {}, "", "", "")
         self.assertIsInstance(ret, GatewaySubmittedRun)
         ret.submitted_run.wait()
-        self.assertEqual(ret.submitted_run.get_status(), RunStatus.to_string(RunStatus.FINISHED))
+        self.assertEqual(
+            ret.submitted_run.get_status(), RunStatus.to_string(RunStatus.FINISHED)
+        )
 
     def test_client_hello(self):
         srv = GatewayServer(inside_script="test/inside-noop.sh")
@@ -76,7 +79,8 @@ class GatewayServerTest(unittest.TestCase):
         self.assertIsInstance(server_id, GatewaySubmittedRun)
         server_id.submitted_run.wait()
         self.assertEqual(
-            server_id.submitted_run.get_status(), RunStatus.to_string(RunStatus.FINISHED)
+            server_id.submitted_run.get_status(),
+            RunStatus.to_string(RunStatus.FINISHED),
         )
 
     @unittest.skipUnless(shutil.which("sbatch"), "Requires SLURM")
