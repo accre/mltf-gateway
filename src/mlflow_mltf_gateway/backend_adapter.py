@@ -29,14 +29,38 @@ class BackendAdapter:
     ):
         raise NotImplementedError()
 
+    @abstractmethod
+    def wait(self, run_id):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def get_status(self, run_id):
+        raise NotImplementedError()
+
 
 class RESTAdapter(BackendAdapter):
     """
     Enables a client process to call backend functions via REST
     """
+    def __init__(self, *, debug_gateway_uri = None):
+        super().__init__(self)
 
-    pass
+    def enqueue_run(
+        self,
+        project_tarball,
+        entry_point,
+        params,
+        backend_config,
+        tracking_uri,
+        experiment_id,
+    ):
+        raise NotImplementedError("To fix")
 
+    def wait(self, run_id):
+        raise NotImplementedError("To fix")
+
+    def get_status(self, run_id):
+        raise NotImplementedError("To fix")
 
 # Just a dummy user subject when running locally
 LOCAL_ADAPTER_USER_SUBJECT = "LOCAL_USER"

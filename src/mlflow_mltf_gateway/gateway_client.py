@@ -14,7 +14,7 @@ from mlflow.projects import (
 from mlflow.projects.backend.abstract_backend import AbstractBackend
 from mlflow.utils.logging_utils import _configure_mlflow_loggers
 
-from mlflow_mltf_gateway.backend_adapter import LocalAdapter
+from mlflow_mltf_gateway.backend_adapter import LocalAdapter, RESTAdapter
 from mlflow_mltf_gateway.project_packer import prepare_tarball, produce_tarball
 
 _configure_mlflow_loggers(root_module_name=__name__)
@@ -28,6 +28,18 @@ IS_DEBUG = True
 def gateway_backend_builder() -> AbstractBackend:
     return GatewayProjectBackend()
 
+def adaptor_factory():
+    """
+    Different "adaptors" let the client connect to either a local or remote gateway.
+    Abstract it out so there's one place for the configuration stuff to hook
+    :return: Instance of AbstractBackend the client should use
+    """
+    if os.environ.get("MLTF_GATEWAY_URI"):
+        return RESTAdapter(os.environ.getattr("MLTF_GATEWAY_URI"))
+    else:
+        # FIXME Make an error message if someone doesn't choose a gateway URI
+        #       Otherwise, they will have a bad experience running a LocalAdapter
+        return LocalAdapter()
 
 class GatewayProjectBackend(AbstractBackend):
     """
@@ -62,7 +74,7 @@ class GatewayProjectBackend(AbstractBackend):
         try:
             project_tarball = produce_tarball(file_catalog)
             _logger.info(f"Tarball produced at {project_tarball}")
-            impl = LocalAdapter()
+            impl = adaptor_factory()
             return impl.enqueue_run(
                 project_tarball,
                 entry_point,
