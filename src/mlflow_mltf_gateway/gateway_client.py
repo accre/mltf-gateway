@@ -10,6 +10,7 @@ import os
 
 from mlflow.projects import (
     fetch_and_validate_project,
+    get_or_create_run,
 )
 from mlflow.projects.backend.abstract_backend import AbstractBackend
 from mlflow.utils.logging_utils import _configure_mlflow_loggers
@@ -61,7 +62,10 @@ class GatewayProjectBackend(AbstractBackend):
     ):
 
         work_dir = fetch_and_validate_project(project_uri, version, entry_point, params)
-
+        mlflow_run_obj = get_or_create_run(
+            None, project_uri, experiment_id, work_dir, version, entry_point, params
+        )
+        mlflow_run = mlflow_run_obj.info.run_id
         _logger.info(f"Bundling user environment")
         file_catalog = prepare_tarball(work_dir)
         tarball_limit = 1024 * 1024 * 1024  # 1Gigabyte
@@ -78,6 +82,7 @@ class GatewayProjectBackend(AbstractBackend):
             _logger.info(f"Tarball produced at {project_tarball}")
             impl = adaptor_factory()
             return impl.enqueue_run(
+                mlflow_run,
                 project_tarball,
                 entry_point,
                 params,

@@ -7,6 +7,7 @@ import logging
 _logger = logging.getLogger(__name__)
 
 from mlflow_mltf_gateway.client_submitted_run import GatewaySubmittedRun
+from mlflow.projects.utils import fetch_and_validate_project, get_or_create_run
 
 
 class BackendAdapter:
@@ -20,6 +21,7 @@ class BackendAdapter:
     @abstractmethod
     def enqueue_run(
         self,
+        mlflow_run,
         project_tarball,
         entry_point,
         params,
@@ -48,6 +50,7 @@ class RESTAdapter(BackendAdapter):
 
     def enqueue_run(
         self,
+        mlflow_run,
         project_tarball,
         entry_point,
         params,
@@ -104,6 +107,7 @@ class LocalAdapter(BackendAdapter):
 
     def enqueue_run(
         self,
+        mlflow_run,
         project_tarball,
         entry_point,
         params,
@@ -121,8 +125,9 @@ class LocalAdapter(BackendAdapter):
         print(f"Copying tarball from {project_tarball} to {tarball_copy.name}")
         # The Server side will return a run reference, which points to the object on the server side. Let's wrap that
         # in the SubmittedRun object the client expects
+
         run_reference = self.gw.enqueue_run_client(
-            uuid.uuid4(),
+            mlflow_run,
             tarball_copy.name,
             entry_point,
             params,
@@ -131,5 +136,5 @@ class LocalAdapter(BackendAdapter):
             experiment_id,
             LOCAL_ADAPTER_USER_SUBJECT,
         )
-        ret = GatewaySubmittedRun(self, run_reference.index)
+        ret = GatewaySubmittedRun(self, mlflow_run, run_reference.index)
         return ret

@@ -13,12 +13,14 @@ function echo_error() {
 debug=false
 inside_file="$(pwd)/inside.sh"
 initial_dir="$(pwd)"
+run_id="0"
 
 while getopts "di:t:" opt; do
   case $opt in
   d) debug=true ;;
   i) inside_file="$OPTARG" ;;
 	t) tarball="$OPTARG" ;;
+  r) run_id="$OPTARG" ;;
 	\?)
       echo_error "Invalid option: -$OPTARG"
       exit 1
@@ -65,8 +67,9 @@ if command -v nerdctl >&/dev/null; then
   nerdctl run -i \
     -v "${tempdir}":/tmp/ --rm=true \
     ghcr.io/perilousapricot/mltf-rocky9 \
+    --env MLFLOW_ENV_ROOT=/tmp/venvs \
     -- \
-    /bin/bash /tmp/mltf-input/inside.sh -t /tmp/mltf-input/mlflow-input.tar.gz
+    /bin/bash /tmp/mltf-input/inside.sh -t /tmp/mltf-input/mlflow-input.tar.gz -r "${run_id}"
 elif command -v apptainer >&/dev/null; then
   #
   # I don't think these are the right bind params but let's roll with it
@@ -80,7 +83,7 @@ elif command -v apptainer >&/dev/null; then
     -B "${tempdir}":/tmp/:rw \
     docker://ghcr.io/perilousapricot/mltf-rocky9 \
     -- \
-    /bin/bash /tmp/mltf-input/inside.sh -t /tmp/mltf-input/mlflow-input.tar.gz
+    /bin/bash /tmp/mltf-input/inside.sh -t /tmp/mltf-input/mlflow-input.tar.gz -r "${run_id}"
 else
   echo_error "Can't find containerization engine. Please add one"
   exit 1

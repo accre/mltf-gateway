@@ -32,7 +32,7 @@ Issues = "https://github.com/PerliousApricot/mlflow-mltf-gateway/issues"
 Source = "https://github.com/PerilousApricot/mlflow-mltf-gateway"
 
 [project.entry-points."mlflow.project_backend"]
-gateway = "mlflow_mltf_gateway.gateway_backend:gateway_backend_builder"
+gateway = "mlflow_mltf_gateway.gateway_client:gateway_backend_builder"
 
 [project.scripts]
 mltf = "mlflow_mltf_gateway.scripts:main"
