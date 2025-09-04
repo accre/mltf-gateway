@@ -42,7 +42,8 @@ class RESTAdapter(BackendAdapter):
     """
     Enables a client process to call backend functions via REST
     """
-    def __init__(self, *, debug_gateway_uri = None):
+
+    def __init__(self, *, debug_gateway_uri=None):
         super().__init__(self)
 
     def enqueue_run(
@@ -61,6 +62,7 @@ class RESTAdapter(BackendAdapter):
 
     def get_status(self, run_id):
         raise NotImplementedError("To fix")
+
 
 # Just a dummy user subject when running locally
 LOCAL_ADAPTER_USER_SUBJECT = "LOCAL_USER"

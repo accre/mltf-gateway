@@ -28,6 +28,7 @@ IS_DEBUG = True
 def gateway_backend_builder() -> AbstractBackend:
     return GatewayProjectBackend()
 
+
 def adaptor_factory():
     """
     Different "adaptors" let the client connect to either a local or remote gateway.
@@ -40,6 +41,7 @@ def adaptor_factory():
         # FIXME Make an error message if someone doesn't choose a gateway URI
         #       Otherwise, they will have a bad experience running a LocalAdapter
         return LocalAdapter()
+
 
 class GatewayProjectBackend(AbstractBackend):
     """
