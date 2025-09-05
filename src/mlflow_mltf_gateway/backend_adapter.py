@@ -3,6 +3,7 @@ import uuid
 import shutil
 import tempfile
 import logging
+from urllib.parse import urlparse
 
 _logger = logging.getLogger(__name__)
 
@@ -14,8 +15,6 @@ class BackendAdapter:
     """
     Base class for connections between the client and backend.
     """
-
-    __metaclass__ = ABCMeta
 
     # Note that the tarball can be deleted by the caller so we need to save it somewhere before returning
     @abstractmethod
@@ -37,6 +36,10 @@ class BackendAdapter:
 
     @abstractmethod
     def get_status(self, run_id):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def get_tracking_server(self):
         raise NotImplementedError()
 
 
@@ -122,7 +125,6 @@ class LocalAdapter(BackendAdapter):
             shutil.copyfileobj(f, tarball_copy)
         tarball_copy.close()
         _logger.info(f"Copying tarball from {project_tarball} to {tarball_copy.name}")
-        print(f"Copying tarball from {project_tarball} to {tarball_copy.name}")
         # The Server side will return a run reference, which points to the object on the server side. Let's wrap that
         # in the SubmittedRun object the client expects
 

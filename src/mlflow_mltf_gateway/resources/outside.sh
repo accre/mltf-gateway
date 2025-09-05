@@ -15,7 +15,7 @@ inside_file="$(pwd)/inside.sh"
 initial_dir="$(pwd)"
 run_id="0"
 
-while getopts "di:t:" opt; do
+while getopts "di:t:r:" opt; do
   case $opt in
   d) debug=true ;;
   i) inside_file="$OPTARG" ;;
@@ -55,11 +55,17 @@ else
   trap "rm -rf -- ${tempdir}" 0
 fi
 
-set -x
+if [ "$debug" == "true" ]; then
+  set -x
+fi
+
 mkdir -p "${tempdir}"/{mltf-input,venvs,mltf-output}
 cp ${tarball} "${tempdir}"/mltf-input/mlflow-input.tar.gz
 cp ${inside_file} "${tempdir}"/mltf-input/inside.sh
 cd "${tempdir}" || exit 1
+outdir="$(mktemp -d -p "$initial_dir" mltf-output-XXXXXX)"
+console_output="${outdir}/stdout.txt"
+echo "Outputs placed in ${outdir}"
 
 # FIXME: Need to generatlize nerdctl/docker/podman and apptainer/singularity
 #        paths here
@@ -67,9 +73,8 @@ if command -v nerdctl >&/dev/null; then
   nerdctl run -i \
     -v "${tempdir}":/tmp/ --rm=true \
     ghcr.io/perilousapricot/mltf-rocky9 \
-    --env MLFLOW_ENV_ROOT=/tmp/venvs \
     -- \
-    /bin/bash /tmp/mltf-input/inside.sh -t /tmp/mltf-input/mlflow-input.tar.gz -r "${run_id}"
+    /bin/bash /tmp/mltf-input/inside.sh -t /tmp/mltf-input/mlflow-input.tar.gz -r "${run_id}" &>"${console_output}"
 elif command -v apptainer >&/dev/null; then
   #
   # I don't think these are the right bind params but let's roll with it
@@ -83,11 +88,10 @@ elif command -v apptainer >&/dev/null; then
     -B "${tempdir}":/tmp/:rw \
     docker://ghcr.io/perilousapricot/mltf-rocky9 \
     -- \
-    /bin/bash /tmp/mltf-input/inside.sh -t /tmp/mltf-input/mlflow-input.tar.gz -r "${run_id}"
+    /bin/bash /tmp/mltf-input/inside.sh -t /tmp/mltf-input/mlflow-input.tar.gz -r "${run_id}" &>"${console_output}"
 else
   echo_error "Can't find containerization engine. Please add one"
   exit 1
 fi
 
-outdir="$(mktemp -d -p "$initial_dir" mltf-output-XXXXXX)"
 cp -a "${tempdir}"/mltf-output "$outdir"

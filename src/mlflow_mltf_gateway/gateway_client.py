@@ -37,7 +37,7 @@ def adaptor_factory():
     :return: Instance of AbstractBackend the client should use
     """
     if os.environ.get("MLTF_GATEWAY_URI"):
-        return RESTAdapter(os.environ.getattr("MLTF_GATEWAY_URI"))
+        return RESTAdapter(os.environ.get("MLTF_GATEWAY_URI"))
     else:
         # FIXME Make an error message if someone doesn't choose a gateway URI
         #       Otherwise, they will have a bad experience running a LocalAdapter
@@ -61,6 +61,8 @@ class GatewayProjectBackend(AbstractBackend):
         experiment_id,
     ):
 
+        impl = adaptor_factory()
+
         work_dir = fetch_and_validate_project(project_uri, version, entry_point, params)
         mlflow_run_obj = get_or_create_run(
             None, project_uri, experiment_id, work_dir, version, entry_point, params
@@ -80,8 +82,7 @@ class GatewayProjectBackend(AbstractBackend):
         try:
             project_tarball = produce_tarball(file_catalog)
             _logger.info(f"Tarball produced at {project_tarball}")
-            impl = adaptor_factory()
-            return impl.enqueue_run(
+            ret = impl.enqueue_run(
                 mlflow_run,
                 project_tarball,
                 entry_point,
@@ -90,6 +91,8 @@ class GatewayProjectBackend(AbstractBackend):
                 tracking_uri,
                 experiment_id,
             )
+            _logger.info(f"Execution enqueued: {ret}")
+            return ret
         finally:
             if project_tarball and os.path.exists(project_tarball):
                 os.remove(project_tarball)

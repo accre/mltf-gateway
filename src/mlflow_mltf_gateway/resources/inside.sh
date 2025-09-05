@@ -6,15 +6,13 @@
 debug=false
 entrypoint=""
 tarball=""
-set -ex
-mkdir -p /tmp/venvs/butt
-echo "hello world" > /tmp/venvs/butt/hello
-set +ex
-while getopts "dt:e:" opt; do
+
+while getopts "dt:e:r:" opt; do
   case $opt in
   d) debug=true ;;
 	t) tarball="$OPTARG" ;;
 	e) entrypoint="$OPTARG" ;;
+  r) export MLFLOW_RUN_ID="$OPTARG" ;;
 	\?) 
       >&2 echo "Invalid option: -$OPTARG"
       exit 1
