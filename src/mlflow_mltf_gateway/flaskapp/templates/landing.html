@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <title>Sign In</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.1/css/bulma.min.css">
+{% endblock %}
+
+{% block content %}
+    <div class="main-content">
+        <h2>Welcome to MLTF Gateway</h2>
+        <hr>
+        <h3>User Details: </h3>
+        <h4>Username: {{ g.user['username'] }}</h4>
+        <h4>Email: {{ g.user['email'] }}</h4>
+    </div>
+{% endblock %}

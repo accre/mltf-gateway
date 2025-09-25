@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <title>Sign In</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.1/css/bulma.min.css">
+{% endblock %}
+
+{% block content %}
+    <div class="main-content">
+        <button class="button is-primary" onclick="window.location.href='{{ new_token_url }}'">+ New Token</button>
+        <table class="table is-fullwidth is-striped is-hoverable">
+            <thead>
+                <tr>
+                    <th>Token ID</th>
+                    <th>Token</th>
+                    <th>Refresh</th>
+                    <th>Token Type</th>
+                    <th>Expires At</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for token in tokens %}
+                <tr>
+                    <td>{{ token.id }}</td>
+                    <td>... {{ token.refresh_token[-4:] }}</td>
+                    <td>... {{ token.access_token[-4:] }}</td>
+                    <td>{{ token.token_type }}</td>
+                    <td>{{ token.expires_in }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('token.delete_token', token_id=token.id) }}" style="display:inline;">
+                            <button type="submit" class="button is-danger is-small">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+    </div>
+{% endblock %}
