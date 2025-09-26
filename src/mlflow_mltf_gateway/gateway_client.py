@@ -36,8 +36,11 @@ def adaptor_factory():
     Abstract it out so there's one place for the configuration stuff to hook
     :return: Instance of AbstractBackend the client should use
     """
-    if os.environ.get("MLTF_GATEWAY_URI"):
-        return RESTAdapter(os.environ.get("MLTF_GATEWAY_URI"))
+    uri = os.environ.get("MLTF_GATEWAY_URI")
+    if uri == "LOCAL":
+        return LocalAdapter()
+    elif uri:
+        return RESTAdapter(uri)
     else:
         # FIXME Make an error message if someone doesn't choose a gateway URI
         #       Otherwise, they will have a bad experience running a LocalAdapter

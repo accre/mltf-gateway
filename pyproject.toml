@@ -25,7 +25,8 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: PyPy",
 ]
 # Beats me how to break this into a dev-only depenendancy list
-dependencies = ["mlflow-skinny", "jinja2", "requests", "black", "flask", "tbump"]
+dependencies = ["mlflow-skinny", "jinja2", "requests", "black", "flask", "tbump", "keyring",
+                "keyrings.cryptfile", "oauthlib"]
 
 [project.urls]
 Documentation = "https://github.com/PerilousApricot/mlflow-mltf-gateway#readme"
