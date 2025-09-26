@@ -12,6 +12,7 @@ license = "MIT"
 keywords = []
 authors = [
   { name = "Andrew Melo", email = "andrew.melo@gmail.com" },
+  { name = "Prasanna Koirala", email = "prasanna.koirala@vanderbilt.edu"}
 ]
 classifiers = [
   "Development Status :: 4 - Beta",
@@ -26,16 +27,18 @@ classifiers = [
 ]
 # Beats me how to break this into a dev-only depenendancy list
 dependencies = [
-    "mlflow-skinny",
-    "jinja2",
-    "requests",
+    "PyJWT",
     "black",
     "flask",
-    "tbump",
     "flask-login",
     "flask-sqlalchemy",
+    "jinja2",
+    "keyring",
+    "keyrings.cryptfile",
+    "mlflow-skinny",
     "python-dotenv",
-    "PyJWT"
+    "requests",
+    "tbump",
   ]
 
 [project.urls]

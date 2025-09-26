@@ -60,16 +60,37 @@ class GatewayServer:
         self.runs = []
 
     def reference_to_run(self, ref):
+        """
+        We store/persist run information within GatewayServer, but we shouldn't bother the client with those details.
+        Instead, give the client an (opaque) integer reference to the run object
+        :param ref: Integer reference to the run
+        :return: GatewaySubmittedRun referred to by reference
+        """
         return self.runs[ref.index]
 
     def run_to_reference(self, run):
+        """
+        See reference_to_run. This is the opposite
+        :param run: GatewaySubmittedRun object
+        :return: Integer reference to run
+        """
         return self.runs.index(run)
 
-    def wait(self, run_id):
-        self.runs[run_id].submitted_run.wait()
+    def wait(self, run_ref):
+        """
+        Waits for a specified run to complete execution
+        :param run_ref: Integer reference to run
+        :return:
+        """
+        self.runs[run_ref].submitted_run.wait()
 
-    def get_status(self, run_id):
-        return self.runs[run_id].submitted_run.get_status()
+    def get_status(self, run_ref):
+        """
+        Get execution status of a run
+        :param run_ref: Integer reference to run
+        :return: Stateus
+        """
+        return self.runs[run_ref].submitted_run.get_status()
 
     def enqueue_run(
         self,
@@ -126,6 +147,8 @@ class GatewayServer:
     ):
         """
         :param run_desc: Descriptor provided by MLFlow
+        :param inside_script: Script to run inside the container
+        :param outside_script: Script which executes the container, passing control to the inside_script
         :return: what to run - list of files, then a list of lists for command lines
         """
         input_files = {
@@ -133,6 +156,7 @@ class GatewayServer:
             "inside.sh": MovableFileReference(get_script(inside_script)),
             "client-tarball": MovableFileReference(run_desc.tarball_path),
         }
+        # FIXME point input files to input_files dict
         cmdline = [
             "/bin/bash",
             "input/outside.sh",

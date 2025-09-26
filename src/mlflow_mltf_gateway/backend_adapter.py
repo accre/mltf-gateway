@@ -15,6 +15,12 @@ from .submitted_runs.gateway_run import GatewaySubmittedRun
 
 _logger = logging.getLogger(__name__)
 
+from mlflow_mltf_gateway.client_submitted_run import GatewaySubmittedRun
+from mlflow.projects.utils import fetch_and_validate_project, get_or_create_run
+
+# Import OAuth2 client for authentication
+from mlflow_mltf_gateway.oauth_client import add_auth_header_to_request
+
 
 class BackendAdapter:
     """
@@ -90,10 +96,39 @@ class RESTAdapter(BackendAdapter):
         return GatewaySubmittedRun(self, mlflow_run, run_reference["index"])
 
     def wait(self, run_id):
-        raise NotImplementedError("To fix")
+        # Prepare the request URL
+        url = f"{self.gateway_uri}/wait/{run_id}"
+
+        # Prepare headers with authentication
+        headers = {}
+        headers = add_auth_header_to_request(headers)
+
+        # Make the GET request to wait for completion
+        response = requests.get(url, headers=headers)
+
+        if response.status_code != 200:
+            raise RuntimeError(f"Failed to wait for run: {response.text}")
+
+        return response.json()
 
     def get_status(self, run_id):
-        raise NotImplementedError("To fix")
+        # Prepare the request URL
+        url = f"{self.gateway_uri}/status/{run_id}"
+
+        # Prepare headers with authentication
+        headers = {}
+        headers = add_auth_header_to_request(headers)
+
+        # Make the GET request to check status
+        response = requests.get(url, headers=headers)
+
+        if response.status_code != 200:
+            raise RuntimeError(f"Failed to get run status: {response.text}")
+
+        return response.json()
+
+    def get_tracking_server(self):
+        return self.gateway_uri
 
 
 # Just a dummy user subject when running locally
@@ -110,6 +145,7 @@ class LocalAdapter(BackendAdapter):
     gw = None
 
     def __init__(self, *, debug_gateway=None):
+        super().__init__()  # Call the parent class constructor
         self.gw = debug_gateway if debug_gateway else self.return_or_load_gateway()
         if not self.gw:
             raise RuntimeError("MLTF local gateway unavailable in this environment")
