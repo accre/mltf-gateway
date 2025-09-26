@@ -1,12 +1,13 @@
 """
-    Client-side code for MLFLOW
-    Heavily inspired by mlflow-slurm: https://github.com/ncsa/mlflow-slurm
+Client-side code for MLFLOW
+Heavily inspired by mlflow-slurm: https://github.com/ncsa/mlflow-slurm
 """
 
 from mlflow.projects.backend.abstract_backend import AbstractBackend
 from dotenv import load_dotenv
 
 from .backends.GatewayBackend import GatewayProjectBackend
+
 # from .backends.SSAMBackend import SSAMProjectBackend # <-- use this to enable SSAM backend
 
 

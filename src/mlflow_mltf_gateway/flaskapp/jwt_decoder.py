@@ -9,6 +9,7 @@ audience = OAUTH2_CONFIG["client_id"]
 
 jwks_client = PyJWKClient(jwks_url)
 
+
 def decode(token):
     """
     Validate and decode a JWT access token locally.
@@ -18,9 +19,9 @@ def decode(token):
         payload = jwt.decode(
             token,
             signing_key.key,
-            algorithms=["RS256"],   # or the alg your provider uses
+            algorithms=["RS256"],  # or the alg your provider uses
             audience=audience,
-            issuer=issuer
+            issuer=issuer,
         )
         return payload
     except jwt.ExpiredSignatureError:

@@ -5,21 +5,22 @@ from dataclasses import dataclass
 
 from mlflow.projects.submitted_run import SubmittedRun
 
+
 @dataclass
 class MovableFileReference:
     """
-        Wrap around a path so that we can store this in a command line then concrete 
-        executors can move files to somewhere appropriate (e.g. slurm w/o a shared filesystem).
-        If the path is just a string then this becomes difficult
+    Wrap around a path so that we can store this in a command line then concrete
+    executors can move files to somewhere appropriate (e.g. slurm w/o a shared filesystem).
+    If the path is just a string then this becomes difficult
     """
 
     target: str
 
     def copy_to_dir(self, target_dir: str):
         """
-            Copy the file to a directory, updating our target to point to the new location
-            :param target_dir: Directory to copy to
-            :return: self
+        Copy the file to a directory, updating our target to point to the new location
+        :param target_dir: Directory to copy to
+        :return: self
         """
         target = os.path.join(target_dir, os.path.basename(self.target))
         assert os.path.isdir(target_dir)
@@ -35,11 +36,11 @@ class MovableFileReference:
 @dataclass
 class RunReference:
     """
-        The primary use-case of the Gateway server is to be called via REST,
-        which means we don't want to exchange SubmittedRun references with clients
-        (since they contain things that either don't serialize or are sensitive).
-        Instead, we exchange RunReferences with the client, which points to a
-        SubmittedRun reference the GatewayServer object owns
+    The primary use-case of the Gateway server is to be called via REST,
+    which means we don't want to exchange SubmittedRun references with clients
+    (since they contain things that either don't serialize or are sensitive).
+    Instead, we exchange RunReferences with the client, which points to a
+    SubmittedRun reference the GatewayServer object owns
     """
 
     # For now, this is just the index into GatewayServer's runs list where the "real" object lives

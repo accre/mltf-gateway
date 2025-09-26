@@ -5,32 +5,31 @@ import tempfile
 from ...gateway_server import GatewayServer
 
 
-gateway_api_bp = Blueprint('gateway_api', __name__)
+gateway_api_bp = Blueprint("gateway_api", __name__)
+
 
 @gateway_api_bp.route("/securedata")
 @require_oauth_token
 def secure_data():
-    return jsonify({
-        "message": "Hello",
-        "email": g.user["email"],
-        "username": g.user["username"]
-    })
+    return jsonify(
+        {"message": "Hello", "email": g.user["email"], "username": g.user["username"]}
+    )
 
 
 @gateway_api_bp.route("/job", methods=["POST"])
 @require_oauth_token
 def submit():
     """
-        Submit a new job to the gateway server
-        Expects a multipart/form-data request with the following fields:
-            - tarball: The tarball file containing the MLflow project
-            - entry_point: The entry point to run
-            - params: JSON string of parameters for the entry point
-            - backend_config: JSON string of backend configuration
-            - tracking_uri: The MLflow tracking URI
-            - experiment_id: The MLflow experiment ID
-        Returns:
-            JSON response with job reference details
+    Submit a new job to the gateway server
+    Expects a multipart/form-data request with the following fields:
+        - tarball: The tarball file containing the MLflow project
+        - entry_point: The entry point to run
+        - params: JSON string of parameters for the entry point
+        - backend_config: JSON string of backend configuration
+        - tracking_uri: The MLflow tracking URI
+        - experiment_id: The MLflow experiment ID
+    Returns:
+        JSON response with job reference details
     """
     tarball = request.files["tarball"]
     run_id = request.form["run_id"]

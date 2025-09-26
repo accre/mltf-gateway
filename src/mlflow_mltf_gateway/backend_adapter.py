@@ -16,7 +16,6 @@ from .submitted_runs.gateway_run import GatewaySubmittedRun
 _logger = logging.getLogger(__name__)
 
 
-
 class BackendAdapter:
     """
     Base class for connections between the client and backend.
@@ -83,7 +82,9 @@ class RESTAdapter(BackendAdapter):
         if self.token:
             headers["Authorization"] = f"Bearer {self.token}"
 
-        response = requests.post(job_url, files=files, data=data, headers=headers, timeout=30)
+        response = requests.post(
+            job_url, files=files, data=data, headers=headers, timeout=30
+        )
         response.raise_for_status()
         run_reference = response.json()
         return GatewaySubmittedRun(self, mlflow_run, run_reference["index"])

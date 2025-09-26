@@ -5,6 +5,7 @@ Utility functions for MLTF backend.
 import shlex
 from typing import Tuple, List
 
+
 def try_split_cmd(cmd: str) -> Tuple[str, List[str]]:
     """
     Given a command string, try to split it into an entry point and args.

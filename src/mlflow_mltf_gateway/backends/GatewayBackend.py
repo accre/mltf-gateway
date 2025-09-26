@@ -35,7 +35,6 @@ def adaptor_factory():
         return LocalAdapter()
 
 
-
 class GatewayProjectBackend(AbstractBackend):
     """
     API Enforced from MLFlow - see

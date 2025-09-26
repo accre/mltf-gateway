@@ -20,11 +20,11 @@ _logger = logging.getLogger(__name__)
 
 class SSAMSubmittedRun(SubmittedRun):
     """
-        Instance of SubmittedRun
-        corresponding to a Slum Job launched through SSAM to run an MLflow
-        project.
-        :param ssam_job_id: ID of the submitted SSAM Job.
-        :param mlflow_run_id: ID of the MLflow project run.
+    Instance of SubmittedRun
+    corresponding to a Slum Job launched through SSAM to run an MLflow
+    project.
+    :param ssam_job_id: ID of the submitted SSAM Job.
+    :param mlflow_run_id: ID of the MLflow project run.
     """
 
     def __init__(
@@ -32,7 +32,7 @@ class SSAMSubmittedRun(SubmittedRun):
         mlflow_run_id: str,
         ssam_job_ids: List[str],
         ssam_url: str,
-        auth_token: str
+        auth_token: str,
     ) -> None:
         super().__init__()
         self._mlflow_run_id = mlflow_run_id
@@ -80,7 +80,7 @@ class SSAMSubmittedRun(SubmittedRun):
             response = requests.get(
                 f"{self._ssam_url}/slurm/{self.job_id}/output",
                 headers=headers,
-                timeout=30
+                timeout=30,
             )
             response.raise_for_status()
             response_json = response.json()
@@ -89,8 +89,9 @@ class SSAMSubmittedRun(SubmittedRun):
                 # The log is the value of the first key in the data dictionary
                 if log_data:
                     log_lines = next(iter(log_data.values()))
-                    MlflowClient().log_text(self.run_id, log_lines,
-                                            f"ssam-{self.job_id}.txt")
+                    MlflowClient().log_text(
+                        self.run_id, log_lines, f"ssam-{self.job_id}.txt"
+                    )
         except requests.exceptions.RequestException as e:
             message = f"Error fetching logs for job {self.job_id}: {e}"
             _logger.error(message)
@@ -98,16 +99,14 @@ class SSAMSubmittedRun(SubmittedRun):
         return self._status == RunStatus.FINISHED
 
     def cancel(self) -> None:
-        """ Cancels the submitted job. """
+        """Cancels the submitted job."""
         try:
             headers = {
                 "Authorization": f"Bearer {self._auth_token}",
             }
             # The SSAM API doc does not specify a cancel endpoint. Assuming one here.
             response = requests.delete(
-                f"{self._ssam_url}/slurm/{self.job_id}",
-                headers=headers,
-                timeout=30
+                f"{self._ssam_url}/slurm/{self.job_id}", headers=headers, timeout=30
             )
             response.raise_for_status()
             self._update_status()
@@ -125,9 +124,7 @@ class SSAMSubmittedRun(SubmittedRun):
                 "Authorization": f"Bearer {self._auth_token}",
             }
             response = requests.get(
-                f"{self._ssam_url}/slurm/{self.job_id}",
-                headers=headers,
-                timeout=30
+                f"{self._ssam_url}/slurm/{self.job_id}", headers=headers, timeout=30
             )
             response.raise_for_status()
             response_json = response.json()
@@ -146,9 +143,11 @@ class SSAMSubmittedRun(SubmittedRun):
                         self._status = RunStatus.RUNNING
                     else:
                         _logger.warning(
-                            "Job ID %s, has an unmapped status of: %s", self.job_id, job_state
+                            "Job ID %s, has an unmapped status of: %s",
+                            self.job_id,
+                            job_state,
                         )
-                        self._status = None # Or some other default
+                        self._status = None  # Or some other default
             else:
                 message = f"Failed to get status for job {self.job_id}: {response_json.get('message')}"
                 _logger.error(message)

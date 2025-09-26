@@ -4,12 +4,13 @@ from mlflow.projects.submitted_run import SubmittedRun
 
 class SLURMSubmittedRun(SubmittedRun):
     """
-        Instance of SubmittedRun
-        corresponding to a Slurm Job to run an MLflow
-        project.
-        :param run_id: ID of the MLflow project run.
-        :param slurm_id: ID of the submitted Slurm Job.
+    Instance of SubmittedRun
+    corresponding to a Slurm Job to run an MLflow
+    project.
+    :param run_id: ID of the MLflow project run.
+    :param slurm_id: ID of the submitted Slurm Job.
     """
+
     def __init__(self, run_id, slurm_id):
         super().__init__()
         self.run_id = run_id

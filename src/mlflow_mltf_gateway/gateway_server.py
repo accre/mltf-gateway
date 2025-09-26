@@ -8,7 +8,7 @@ from .data_classes import (
     MovableFileReference,
     RunReference,
     GatewayRunDescription,
-    GatewaySubmittedRunDescription
+    GatewaySubmittedRunDescription,
 )
 
 DEBUG = False
@@ -16,8 +16,8 @@ DEBUG = False
 
 def return_id_decorator(f):
     """
-        Helper wrapper to take a function which returns a SubmittedRun
-        and converts to return a RunReference
+    Helper wrapper to take a function which returns a SubmittedRun
+    and converts to return a RunReference
     """
 
     @functools.wraps(f)
@@ -27,13 +27,21 @@ def return_id_decorator(f):
 
     return wrapper
 
+
 class GatewayServer:
     """
-        Implements functionality which accepts Projects from user and executes
-        them via plugabble executors
+    Implements functionality which accepts Projects from user and executes
+    them via plugabble executors
     """
 
-    def __init__(self, *, executor_name="local", executor=None, inside_script="", outside_script=""):
+    def __init__(
+        self,
+        *,
+        executor_name="local",
+        executor=None,
+        inside_script="",
+        outside_script="",
+    ):
         if executor:
             self.executor = executor
         else:

@@ -11,11 +11,12 @@ from mlflow.projects.submitted_run import LocalSubmittedRun
 
 class SLURMExecutor(ExecutorBase):
     """
-        Files in below this directory are visible to all hosts
-        Needs to be configurable
-        For some reason, /home doesn't work here on MacOS because of something
-        with realpath()
+    Files in below this directory are visible to all hosts
+    Needs to be configurable
+    For some reason, /home doesn't work here on MacOS because of something
+    with realpath()
     """
+
     shared_paths = ["/panfs/", "/cvmfs/", "/home", os.path.expanduser("~")]
 
     def __init__(self):

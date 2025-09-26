@@ -15,7 +15,6 @@ def get_script(script_name):
     return ret
 
 
-
 def jinja_loader(script_name):
     """
     Loads a script for Jinja
@@ -28,10 +27,12 @@ def jinja_loader(script_name):
 
 jinja_env = Environment(loader=FunctionLoader(jinja_loader))
 
+
 class ExecutorBase:
     """
-        Base class for executors
+    Base class for executors
     """
+
     def run_context_async(self, ctx, run_desc):
         """
         Executes a task asynchronosly

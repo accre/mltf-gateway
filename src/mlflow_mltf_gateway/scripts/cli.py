@@ -7,7 +7,12 @@ import argparse
 import sys
 
 # Import OAuth2 client
-from mlflow_mltf_gateway.oauth_client import is_authenticated, authenticate_with_device_flow, logout, add_auth_header_to_request
+from mlflow_mltf_gateway.oauth_client import (
+    is_authenticated,
+    authenticate_with_device_flow,
+    logout,
+    add_auth_header_to_request,
+)
 
 
 # Subcommand function definitions (grouped together)
@@ -109,6 +114,7 @@ def main():
         handle_logout_subcommand(args)
     else:
         parser.print_help()
+
 
 if __name__ == "__main__":
     main()
