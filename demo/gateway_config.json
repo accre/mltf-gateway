@@ -1,3 +1,16 @@
 {
-  "url": "https://gateway-dev-mltf.k8s.accre.vanderbilt.edu"
+  "url": "https://gateway-dev-mltf.k8s.accre.vanderbilt.edu",
+  "job_name": "mlflow-example-job",
+  "nodes": 1,
+  "ntasks-per-node": 1,
+  "cpus-per-task": 8,
+  "partition": "batch",
+  "mem": "80g",
+  "time": 3600,
+  "modules": ["cudnn/v8.2.4", "cuda/11.4.1"],
+  "environment": [
+      "MY_ENV_VAR=value",
+      "TERM=dumb"
+  ],
+  "debug": true
 }

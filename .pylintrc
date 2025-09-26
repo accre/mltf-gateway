@@ -1,0 +1,10 @@
+# This file contains the configuration for Pylint.
+
+[MESSAGES CONTROL]
+
+# A comma-separated list of message IDs to disable.
+# Add the message names or codes to this list.
+disable=
+    line-too-long,  # C0301: Disables the check for line length.
+    logging-fstring-interpolation, # W1308: Allows using f-strings in logging statements.
+    logging-format-interpolation   # W1309: Allows using .format() in logging statements.

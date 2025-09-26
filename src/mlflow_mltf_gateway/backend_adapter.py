@@ -1,14 +1,20 @@
-from abc import ABCMeta, abstractmethod
-import uuid
+"""
+BackendAdapter and implementations for REST and Local adapters.
+"""
+
+import json
+import os
+from abc import abstractmethod
 import shutil
 import tempfile
 import logging
-from urllib.parse import urlparse
+from urllib.parse import urljoin
+import requests
+
+from .submitted_runs.gateway_run import GatewaySubmittedRun
 
 _logger = logging.getLogger(__name__)
 
-from mlflow_mltf_gateway.client_submitted_run import GatewaySubmittedRun
-from mlflow.projects.utils import fetch_and_validate_project, get_or_create_run
 
 
 class BackendAdapter:
@@ -48,8 +54,10 @@ class RESTAdapter(BackendAdapter):
     Enables a client process to call backend functions via REST
     """
 
-    def __init__(self, *, debug_gateway_uri=None):
-        super().__init__(self)
+    def __init__(self, *, gateway_uri=None):
+        super().__init__()
+        self.gateway_uri = gateway_uri
+        self.token = os.environ.get("MLTF_GATEWAY_TOKEN")
 
     def enqueue_run(
         self,
@@ -61,7 +69,24 @@ class RESTAdapter(BackendAdapter):
         tracking_uri,
         experiment_id,
     ):
-        raise NotImplementedError("To fix")
+        job_url = urljoin(self.gateway_uri, "api/job")
+        files = {"tarball": open(project_tarball, "rb")}
+        data = {
+            "run_id": mlflow_run,
+            "entry_point": entry_point,
+            "params": json.dumps(params),
+            "backend_config": json.dumps(backend_config),
+            "tracking_uri": tracking_uri,
+            "experiment_id": experiment_id,
+        }
+        headers = {}
+        if self.token:
+            headers["Authorization"] = f"Bearer {self.token}"
+
+        response = requests.post(job_url, files=files, data=data, headers=headers, timeout=30)
+        response.raise_for_status()
+        run_reference = response.json()
+        return GatewaySubmittedRun(self, mlflow_run, run_reference["index"])
 
     def wait(self, run_id):
         raise NotImplementedError("To fix")

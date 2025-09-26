@@ -1,9 +1,6 @@
-#
-# Had to break this into a separate file to break a circular import
-#
 import logging
 
-from mlflow.projects import SubmittedRun
+from mlflow.projects.submitted_run import SubmittedRun
 
 _logger = logging.getLogger(__name__)
 
