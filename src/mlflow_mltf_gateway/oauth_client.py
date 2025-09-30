@@ -25,25 +25,43 @@ TOKEN_ENDPOINT = os.environ.get(
 )
 SCOPES = os.environ.get("MLTF_SCOPES", "read write").split()
 
+# Used to keep user from having to type a password with each CLI call
+if "MLTF_KEYRING_PASSWORD" in os.environ:
+    os.environ["KEYRING_CRYPTFILE_PASSWORD"] = os.environ.get("MLTF_KEYRING_PASSWORD")
+
+DID_WARN_KEYRING = False
+
 
 def get_stored_credentials() -> Optional[Dict[str, Any]]:
     """Retrieve stored credentials from keyring"""
-
+    start_time = time.time()
     try:
         access_token = keyring.get_password("mltf_gateway", "access_token")
         refresh_token = keyring.get_password("mltf_gateway", "refresh_token")
         token_expires_at = keyring.get_password("mltf_gateway", "expires_at")
 
         if access_token and refresh_token:
+            end_time = time.time()
+            # If it takes longer than 5 secs to retrieve the token, this implies the
+            # user was prompted for a password to unlock the encrypted keyring
+            # Let them know they can set a variable with the password if they
+            # want
+            global DID_WARN_KEYRING
+            if not DID_WARN_KEYRING and ((end_time - start_time) > 5.0):
+                DID_WARN_KEYRING = True
+                print(
+                    f"To prevent prompting for a password, you can cache the password with"
+                )
+                print(f"export MLTF_KEYRING_PASSWORD=<your password>")
+
             return {
                 "access_token": access_token,
                 "refresh_token": refresh_token,
                 "expires_at": token_expires_at,
             }
-        else:
-            print(f"Bad Auth: {access_token} {refresh_token} {token_expires_at}")
+
     except Exception as e:
-        print(f"Error retrieving stored credentials")
+        print(f"Error retrieving stored credentials {e}")
 
     return None
 
@@ -76,7 +94,6 @@ def request_device_code():
 
     try:
         endpoint_uri = AUTHORIZATION_ENDPOINT.replace("/authorize", "/device/code")
-        print(f"URI is {endpoint_uri}")
         response = requests.post(endpoint_uri, data=data)
         response.raise_for_status()
         return response.json()
@@ -93,6 +110,9 @@ def poll_token(device_code, interval=5):
         "grant_type": "urn:ietf:params:oauth:grant-type:device_code",
     }
 
+    # Go ahead and sleep a second since it will be a bit before the user gets
+    # to the page and whatnot
+    time.sleep(10)
     while True:
         try:
             response = requests.post(TOKEN_ENDPOINT, data=data)
@@ -167,7 +187,9 @@ def authenticate_with_device_flow() -> Optional[Dict[str, Any]]:
     try:
         webbrowser.open(verification_uri)
     except Exception as e:
-        print(f"Could not open browser automatically: {e}")
+        # Most of our users will be headless, so don't complain if se cant
+        # open a browser
+        pass
 
     # Step 2: Poll for access token
     print("Waiting for user authorization...")
