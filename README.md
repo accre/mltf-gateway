@@ -34,7 +34,7 @@ export MLTF_SCOPES="read write"
 2. **Use the CLI**:
    ```bash
    mltf list
-   mltf create --name "my-job"
+   mltf submit --name "my-job"
    mltf delete --id "job-id"
    ```
 
