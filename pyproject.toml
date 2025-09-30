@@ -34,7 +34,7 @@ dependencies = [
     "flask-sqlalchemy",
     "jinja2",
     "keyring",
-    "keyrings.cryptfile",
+    "keyrings.cryptfile @ git+https://github.com/frispete/keyrings.cryptfile@3da26edf2f673a3fcd20ca093c7a999b77a23c56 ; sys_platform == 'linux'",
     "mlflow-skinny",
     "python-dotenv",
     "requests",
@@ -54,6 +54,9 @@ mltf = "mlflow_mltf_gateway.scripts:main"
 
 [tool.hatch.version]
 path = "src/mlflow_mltf_gateway/__about__.py"
+
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [tool.hatch.envs.types]
 extra-dependencies = [
