@@ -156,7 +156,7 @@ class GatewayServer:
             "inside.sh": MovableFileReference(get_script(inside_script)),
             "client-tarball": MovableFileReference(run_desc.tarball_path),
         }
-        # FIXME point input files to input_files dict
+        # FIXME point input files to input_files dict so files can be moved
         cmdline = [
             "/bin/bash",
             "input/outside.sh",

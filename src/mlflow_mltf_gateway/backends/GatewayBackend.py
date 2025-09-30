@@ -25,7 +25,7 @@ def adaptor_factory():
     :return: Instance of AbstractBackend the client should use
     """
     load_dotenv()
-    gateway_uri = os.environ.get("MLTF_GATEWAY_URI", "http://localhost:5000")
+    gateway_uri = os.environ.get("MLTF_GATEWAY_URI", "http://localhost:5001")
     if gateway_uri:
         return RESTAdapter(gateway_uri=gateway_uri)
     else:

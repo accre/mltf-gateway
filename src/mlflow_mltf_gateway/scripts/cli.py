@@ -17,6 +17,7 @@ from mlflow_mltf_gateway.oauth_client import (
     logout,
     token_expired,
 )
+from mlflow_mltf_gateway.backends.GatewayBackend import GatewayProjectBackend
 
 
 # Decorator for authentication checks
@@ -49,6 +50,17 @@ def handle_submit_subcommand(args):
         print(f"Submitting item: {args.name}")
     else:
         print("Please provide a name for the new item.")
+
+    backend = GatewayProjectBackend()
+    backend.run(
+        project_uri=args.dir,
+        entry_point="main",
+        params={},
+        version=None,
+        backend_config={},
+        tracking_uri="https://mlflow-test.mltf.k8s.accre.vanderbilt.edu",
+        experiment_id=None,
+    )
 
 
 @require_auth
@@ -119,7 +131,7 @@ def handle_server_subcommand(args):
     app = create_app()
     # Get host and port from arguments or use defaults
     host = args.host or os.environ.get("MLTF_HOST", "localhost")
-    port = args.port or int(os.environ.get("MLTF_PORT", 5000))
+    port = args.port or int(os.environ.get("MLTF_PORT", 5001))
 
     print(f"Starting MLTF Gateway server on {host}:{port}")
     print("Press Ctrl+C to stop the server")
@@ -148,9 +160,8 @@ def create_parser():
     submit_parser.add_argument(
         "--dir",
         "-d",
-        required=True,
         default=os.path.curdir,
-        help="Path of inputs to submit",
+        help="Path of project to submit",
     )
 
     # Delete command

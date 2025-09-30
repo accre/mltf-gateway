@@ -10,7 +10,7 @@ import time
 import webbrowser
 from typing import Optional, Dict, Any
 
-import keyring
+
 import requests
 
 # Configuration - These should be configurable via environment variables or config file
@@ -28,6 +28,7 @@ SCOPES = os.environ.get("MLTF_SCOPES", "read write").split()
 # Used to keep user from having to type a password with each CLI call
 if "MLTF_KEYRING_PASSWORD" in os.environ:
     os.environ["KEYRING_CRYPTFILE_PASSWORD"] = os.environ.get("MLTF_KEYRING_PASSWORD")
+import keyring
 
 DID_WARN_KEYRING = False
 
