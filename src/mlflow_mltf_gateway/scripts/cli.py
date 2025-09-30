@@ -7,7 +7,7 @@ import argparse
 import jwt
 import os.path
 import sys
-import datetime
+from datetime import datetime, timezone
 
 # Import OAuth2 client
 from mlflow_mltf_gateway.oauth_client import (
@@ -85,20 +85,31 @@ def handle_auth_status_subcommand(args):
         return
 
     print(f"Credentials found, expired? {token_expired(creds)}")
+    access_decoded = jwt.decode(
+        creds["access_token"], options={"verify_signature": False}
+    )
+    print(f"Token Subject: {access_decoded['sub']}")
+    print(f"Token Issuer: {access_decoded['iss']}")
     print("Access Token:")
-    access_decoded = jwt.decode(creds['access_token'], options={"verify_signature": False})
+    curr_time = datetime.now(timezone.utc)
+    access_iss = datetime.fromtimestamp(access_decoded["iat"], timezone.utc)
+    access_exp = datetime.fromtimestamp(access_decoded["exp"], timezone.utc)
     # TODO: I believe there is some sort of print indent helper? Look into that
     # TODO: Convert timestamps into human readable objects
-    print(f"  Subject: {access_decoded['sub']}")
-    print(f"   Issuer: {access_decoded['iss']}")
-    print(f"   Issued: {access_decoded['iat']}")
-    print(f"  Expires: {access_decoded['exp']}")
+
+    print(f"    Issued: {access_iss}")
+    print(f"   Expires: {access_exp}")
+    print(f" Remaining: {access_exp - curr_time}")
     print("Refresh Token:")
-    refresh_decoded = jwt.decode(creds['refresh_token'], options={"verify_signature": False})
-    print(f"  Subject: {refresh_decoded['sub']}")
-    print(f"   Issuer: {refresh_decoded['iss']}")
-    print(f"   Issued: {refresh_decoded['iat']}")
-    print(f"  Expires: {refresh_decoded['exp']}")
+    refresh_decoded = jwt.decode(
+        creds["refresh_token"], options={"verify_signature": False}
+    )
+    refresh_iss = datetime.fromtimestamp(refresh_decoded["iat"], timezone.utc)
+    refresh_exp = datetime.fromtimestamp(refresh_decoded["exp"], timezone.utc)
+    print(f"    Issued: {refresh_iss}")
+    print(f"   Expires: {refresh_exp}")
+    print(f" Remaining: {refresh_exp - curr_time}")
+
 
 def handle_server_subcommand(args):
     """Handle the 'server' subcommand - start HTTP server"""
