@@ -19,7 +19,10 @@ from mlflow_mltf_gateway.submitted_runs.gateway_run import GatewaySubmittedRun
 from mlflow.projects.utils import fetch_and_validate_project, get_or_create_run
 
 # Import OAuth2 client for authentication
-from mlflow_mltf_gateway.oauth_client import add_auth_header_to_request, get_access_token
+from mlflow_mltf_gateway.oauth_client import (
+    add_auth_header_to_request,
+    get_access_token,
+)
 
 
 class BackendAdapter:
@@ -64,7 +67,7 @@ class RESTAdapter(BackendAdapter):
         self.gateway_uri = gateway_uri
         self.token = os.environ.get("MLTF_GATEWAY_TOKEN")
         if not self.token:
-            self.token = get_access_token()['access_token']
+            self.token = get_access_token()["access_token"]
 
     def enqueue_run(
         self,

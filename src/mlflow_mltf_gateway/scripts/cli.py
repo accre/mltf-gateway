@@ -63,6 +63,7 @@ def handle_submit_subcommand(args):
     )
     print(f"Submitted run_id {ret.run_id} to MLTF")
 
+
 @require_auth
 def handle_delete_subcommand(args):
     """Handle the 'delete' subcommand."""
