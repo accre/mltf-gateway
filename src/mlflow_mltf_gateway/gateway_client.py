@@ -8,8 +8,6 @@ from dotenv import load_dotenv
 
 from .backends.GatewayBackend import GatewayProjectBackend
 
-# from .backends.SSAMBackend import SSAMProjectBackend # <-- use this to enable SSAM backend
-
 
 # Debug flag
 load_dotenv()
