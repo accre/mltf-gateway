@@ -29,6 +29,7 @@ classifiers = [
 dependencies = [
     "PyJWT",
     "black",
+    "cryptography",
     "flask",
     "flask-login",
     "flask-sqlalchemy",

@@ -52,16 +52,16 @@ def handle_submit_subcommand(args):
         print("Please provide a name for the new item.")
 
     backend = GatewayProjectBackend()
-    backend.run(
+    ret = backend.run(
         project_uri=args.dir,
         entry_point="main",
         params={},
         version=None,
         backend_config={},
         tracking_uri="https://mlflow-test.mltf.k8s.accre.vanderbilt.edu",
-        experiment_id=None,
+        experiment_id="0",
     )
-
+    print(f"Submitted run_id {ret.run_id} to MLTF")
 
 @require_auth
 def handle_delete_subcommand(args):
