@@ -2,7 +2,7 @@ import logging
 from mlflow.projects.submitted_run import SubmittedRun
 
 
-class SLURMSubmittedRun(SubmittedRun):
+class SLURMSubmittedRun:
     """
     Instance of SubmittedRun
     corresponding to a Slurm Job to run an MLflow

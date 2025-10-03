@@ -148,5 +148,9 @@ class SSAMExecutor(ExecutorBase):
         os.remove(entrypoint_script_path)
 
         return SSAMSubmittedRun(
-            run_desc.run_id, [job_id], self.ssam_url, self.auth_token
+            run_desc.run_id,
+            [job_id],
+            self.ssam_url,
+            self.auth_token,
+            run_desc.user_subject,
         )

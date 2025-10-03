@@ -2,23 +2,21 @@
 SSAMSubmittedRun class to manage a Slurm job launched through SSAM to run an MLflow project.
 """
 
-import time
 import logging
-from typing import List
+import time
 from threading import RLock
+from typing import List
 
 import requests
 from mlflow.entities import RunStatus
-from mlflow.projects.submitted_run import SubmittedRun
 from mlflow.tracking import MlflowClient
 from mlflow.utils.logging_utils import _configure_mlflow_loggers
-
 
 _configure_mlflow_loggers(root_module_name=__name__)
 _logger = logging.getLogger(__name__)
 
 
-class SSAMSubmittedRun(SubmittedRun):
+class SSAMSubmittedRun:
     """
     Instance of SubmittedRun
     corresponding to a Slum Job launched through SSAM to run an MLflow
@@ -33,12 +31,14 @@ class SSAMSubmittedRun(SubmittedRun):
         ssam_job_ids: List[str],
         ssam_url: str,
         auth_token: str,
+        user_subject: str,
     ) -> None:
         super().__init__()
         self._mlflow_run_id = mlflow_run_id
         self.ssam_job_ids = ssam_job_ids
         self._ssam_url = ssam_url
         self._auth_token = auth_token
+        self.user_subject = user_subject
         self._status = RunStatus.SCHEDULED
         self._status_lock = RLock()
 
@@ -171,7 +171,7 @@ class SSAMSubmittedRun(SubmittedRun):
     def __getstate__(self):
         """Return state values to be pickled."""
         state = self.__dict__.copy()
-        del state['_status_lock']
+        del state["_status_lock"]
         return state
 
     def __setstate__(self, state):

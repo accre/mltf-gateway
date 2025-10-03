@@ -1,17 +1,37 @@
 import functools
+import pickle
 
-from .executors.local_executor import LocalExecutor
-from .executors.slurm_executor import SLURMExecutor
-from .executors.ssam_executor import SSAMExecutor
-from .executors.base import get_script
+from mlflow_mltf_gateway.submitted_runs.server_run import (
+    ServerSideSubmittedRunDescription,
+)
 from .data_classes import (
     MovableFileReference,
     RunReference,
     GatewayRunDescription,
-    GatewaySubmittedRunDescription,
 )
+from .executors.base import get_script, ExecutorBase
+from .executors.local_executor import LocalExecutor
+from .executors.slurm_executor import SLURMExecutor
+from .executors.ssam_executor import SSAMExecutor
 
 DEBUG = False
+
+# Very simple persistence for now, can be shoved into SQLite or similar later
+RUN_DATABASE = "gateway_run_db.pkl"
+
+
+def persist_runs(runs):
+    with open(RUN_DATABASE, "wb") as f:
+        pickle.dump(runs, f)
+
+
+def unpersist_runs():
+    try:
+        with open(RUN_DATABASE, "rb") as f:
+            return pickle.load(f)
+    except:
+        pass
+    return []
 
 
 def return_id_decorator(f):
@@ -21,9 +41,9 @@ def return_id_decorator(f):
     """
 
     @functools.wraps(f)
-    def wrapper(self, *args, **kwargs):
+    def wrapper(self: "GatewayServer", *args, **kwargs):
         ret = f(self, *args, **kwargs)
-        return RunReference(self.runs.index(ret))
+        return self.run_to_reference(ret)
 
     return wrapper
 
@@ -34,11 +54,13 @@ class GatewayServer:
     them via plugabble executors
     """
 
+    runs: list[ServerSideSubmittedRunDescription]
+
     def __init__(
         self,
         *,
-        executor_name="local",
-        executor=None,
+        executor_name: str = "local",
+        executor: ExecutorBase = None,
         inside_script="",
         outside_script="",
     ):
@@ -57,24 +79,44 @@ class GatewayServer:
         self.outside_script = outside_script or "outside.sh"
         # List of runs we know about
         # Should be persisted to a database
-        self.runs = []
+        self.runs = unpersist_runs()
 
-    def reference_to_run(self, ref):
+    def list(self, list_all, user_subject):
+        """
+        Returns runs this server is aware of belonging to a given user_subject
+        :param list_all: if true, return all jobs regardless if they've been completed/cancelled
+        :param user_subject: subject of the user doing the querying
+        :return: list of GatewaySubmittedRun
+        """
+        # FIXME support filtering jobs based on list_all param
+        ret = []
+        for idx in range(len(self.runs)):
+            r = self.runs[idx]
+            if r.run_desc.user_subject != user_subject:
+                continue
+            ret.append(r.to_client_json())
+
+        return ret
+
+    def reference_to_run(self, ref: RunReference) -> ServerSideSubmittedRunDescription:
         """
         We store/persist run information within GatewayServer, but we shouldn't bother the client with those details.
         Instead, give the client an (opaque) integer reference to the run object
         :param ref: Integer reference to the run
         :return: GatewaySubmittedRun referred to by reference
         """
-        return self.runs[ref.index]
+        for r in self.runs:
+            if ref.gateway_id == r.gateway_id:
+                return r
+        raise IndexError()
 
-    def run_to_reference(self, run):
+    def run_to_reference(self, run: ServerSideSubmittedRunDescription) -> RunReference:
         """
         See reference_to_run. This is the opposite
         :param run: GatewaySubmittedRun object
         :return: Integer reference to run
         """
-        return self.runs.index(run)
+        return RunReference(run.gateway_id)
 
     def wait(self, run_ref):
         """
@@ -82,7 +124,7 @@ class GatewayServer:
         :param run_ref: Integer reference to run
         :return:
         """
-        self.runs[run_ref].submitted_run.wait()
+        self.reference_to_run(run_ref).submitted_run.wait()
 
     def get_status(self, run_ref):
         """
@@ -90,7 +132,7 @@ class GatewayServer:
         :param run_ref: Integer reference to run
         :return: Stateus
         """
-        return self.runs[run_ref].submitted_run.get_status()
+        return self.reference_to_run(run_ref).submitted_run.get_status()
 
     def enqueue_run(
         self,
@@ -101,7 +143,7 @@ class GatewayServer:
         backend_config,
         tracking_uri,
         experiment_id,
-        user_subj="",
+        user_subj,
     ):
         """
         Takes the user request, then submits to a job backend on their behalf (either local or SLURM)
@@ -133,9 +175,9 @@ class GatewayServer:
         )
 
         async_req = self.executor.run_context_async(exec_context, run_desc)
-        run = GatewaySubmittedRunDescription(run_desc, async_req)
+        run = ServerSideSubmittedRunDescription(run_desc, async_req)
         self.runs.append(run)
-
+        persist_runs(self.runs)
         return run
 
     # See docs for RunReference for an explanation

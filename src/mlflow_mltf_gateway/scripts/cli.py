@@ -4,6 +4,8 @@
 
 
 import argparse
+from operator import itemgetter
+
 import jwt
 import os.path
 import sys
@@ -37,10 +39,19 @@ def require_auth(func):
 @require_auth
 def handle_list_subcommand(args):
     """Handle the 'list' subcommand."""
-    if args.all:
-        print("Listing all items...")
+    backend = GatewayProjectBackend()
+    to_decode = backend.list(args.all, False)
+    if to_decode:
+        print("Runs:")
+        to_decode.sort(key=lambda x: x["creation_time"])
+        for j in to_decode:
+            # Jeeze this is long...
+            time_format = "%Y-%m-%d@%H:%M:%S"
+            print(
+                f"  {datetime.fromtimestamp(j['creation_time'], timezone.utc).astimezone().strftime(time_format)} - {j['gateway_id']}"
+            )
     else:
-        print("Listing active items...")
+        print("No Runs found.")
 
 
 @require_auth
@@ -61,14 +72,14 @@ def handle_submit_subcommand(args):
         tracking_uri="https://mlflow-test.mltf.k8s.accre.vanderbilt.edu",
         experiment_id="0",
     )
-    print(f"Submitted run_id {ret.run_id} to MLTF")
+    print(f"Submitted run_id {ret} to MLTF")
 
 
 @require_auth
 def handle_delete_subcommand(args):
     """Handle the 'delete' subcommand."""
-    if args.id:
-        print(f"Deleting item with ID: {args.id}")
+    if args._id:
+        print(f"Deleting item with ID: {args._id}")
     else:
         print("Please provide an ID to delete.")
 

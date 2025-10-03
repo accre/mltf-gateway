@@ -56,6 +56,14 @@ def submit():
         return jsonify(run_reference.__dict__)
 
 
+@gateway_api_bp.route("/jobs", methods=["GET"])
+@require_oauth_token
+def list_jobs():
+    gateway_server = current_app.extensions["mltf_gateway"]
+    jobs = gateway_server.list(list_all=True, user_subject=g.user["username"])
+    return jsonify(jobs), 200
+
+
 @gateway_api_bp.route("/job/<job_id>", methods=["GET"])
 @require_oauth_token
 def status(job_id):

@@ -1,32 +1,33 @@
+import json
 import logging
 import os
-import json
 
-from mlflow.projects.backend.abstract_backend import AbstractBackend
+from dotenv import load_dotenv
 from mlflow.projects import (
     fetch_and_validate_project,
     get_or_create_run,
 )
+from mlflow.projects.backend.abstract_backend import AbstractBackend
 from mlflow.utils.logging_utils import _configure_mlflow_loggers
-from dotenv import load_dotenv
 
+from ..adapters.LocalAdapter import LocalAdapter
+from ..adapters.RESTAdapter import RESTAdapter
 from ..project_packer import prepare_tarball, produce_tarball
-from ..backend_adapter import LocalAdapter, RESTAdapter
-
+from ..submitted_runs.client_run import ClientSideSubmittedRun
 
 _configure_mlflow_loggers(root_module_name=__name__)
 _logger = logging.getLogger(__name__)
 
 
-def adaptor_factory():
+def adapter_factory():
     """
-    Different "adaptors" let the client connect to either a local or remote gateway.
+    Different "adapters" let the client connect to either a local or remote gateway.
     Abstract it out so there's one place for the configuration stuff to hook
     :return: Instance of AbstractBackend the client should use
     """
     load_dotenv()
     gateway_uri = os.environ.get("MLTF_GATEWAY_URI", "http://localhost:5001")
-    if gateway_uri:
+    if gateway_uri and gateway_uri != "LOCAL":
         return RESTAdapter(gateway_uri=gateway_uri)
     else:
         # FIXME:
@@ -39,7 +40,13 @@ class GatewayProjectBackend(AbstractBackend):
     """
     API Enforced from MLFlow - see
     https://mlflow.org/docs/3.3.2/ml/projects/#custom-backend-development
+
+    Annoyingly, only the "run" API is exposed to the mlflow CLI, so all other methods are MLTF-specific
     """
+
+    def list(self, list_all=True, detailed=False) -> list[ClientSideSubmittedRun]:
+        impl = adapter_factory()
+        return impl.list(list_all)
 
     def run(
         self,
@@ -52,7 +59,7 @@ class GatewayProjectBackend(AbstractBackend):
         experiment_id,
     ):
 
-        impl = adaptor_factory()
+        impl = adapter_factory()
 
         work_dir = fetch_and_validate_project(project_uri, version, entry_point, params)
 

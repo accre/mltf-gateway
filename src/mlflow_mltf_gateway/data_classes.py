@@ -3,8 +3,6 @@ import os.path
 import shutil
 from dataclasses import dataclass
 
-from mlflow.projects.submitted_run import SubmittedRun
-
 
 @dataclass
 class MovableFileReference:
@@ -44,7 +42,7 @@ class RunReference:
     """
 
     # For now, this is just the index into GatewayServer's runs list where the "real" object lives
-    index: int
+    gateway_id: str
 
 
 @dataclass
@@ -61,16 +59,3 @@ class GatewayRunDescription:
     tracking_uri: str
     experiment_id: str
     user_subject: str
-
-
-@dataclass
-class GatewaySubmittedRunDescription:
-    """
-    Stores information about a Run submitted to an executor.
-
-    run_desc: the user-provided definition of the run
-    submitted_run: handle pointing to the actual execution (e.g. SLURM job)
-    """
-
-    run_desc: GatewayRunDescription
-    submitted_run: SubmittedRun

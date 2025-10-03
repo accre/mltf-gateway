@@ -22,7 +22,7 @@ def get_current_tokens():
     if not current_user.is_authenticated:
         return []
     return db.session.scalars(
-        db.select(Token).where(Token.user_id == current_user.id)
+        db.select(Token).where(Token.user_id == current_user._id)
     ).all()
 
 
@@ -69,7 +69,7 @@ def delete_token(token_id):
         rendered template with updated token list
     """
     token = db.session.get(Token, token_id)
-    if token is None or token.user_id != current_user.id:
+    if token is None or token.user_id != current_user._id:
         # push into messages flask
         flash("Token not found or unauthorized", "error")
         return render_template("token.html", tokens=get_current_tokens())

@@ -1,14 +1,8 @@
 import unittest
 
-from mlflow.entities import RunStatus
-
 from mlflow_mltf_gateway.backend_adapter import LocalAdapter
 from mlflow_mltf_gateway.gateway_server import (
-    GatewayRunDescription,
-    GatewayServer,
     get_script,
-    MovableFileReference,
-    SLURMExecutor,
 )
 from mlflow_mltf_gateway.gateway_client import (
     GatewayProjectBackend,
