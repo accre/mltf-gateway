@@ -166,3 +166,15 @@ class SSAMSubmittedRun(SubmittedRun):
                 self._status = None
 
         return self._status
+
+    # Locks cannot be pickled, add these dunder methods to delete/restore lock
+    def __getstate__(self):
+        """Return state values to be pickled."""
+        state = self.__dict__.copy()
+        del state['_status_lock']
+        return state
+
+    def __setstate__(self, state):
+        """Restore state from the unpickled state values."""
+        self.__dict__.update(state)
+        self._status_lock = RLock()
