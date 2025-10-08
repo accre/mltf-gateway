@@ -36,7 +36,7 @@ class RESTAdapter(BackendAdapter):
 
     def enqueue_run(
         self,
-        mlflow_run,
+        run_id,
         project_tarball,
         entry_point,
         params,
@@ -47,7 +47,7 @@ class RESTAdapter(BackendAdapter):
         job_url = urljoin(self.gateway_uri, "api/job")
         files = {"tarball": open(project_tarball, "rb")}
         data = {
-            "run_id": mlflow_run,
+            "run_id": run_id,
             "entry_point": entry_point,
             "params": json.dumps(params),
             "backend_config": json.dumps(backend_config),

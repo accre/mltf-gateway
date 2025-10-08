@@ -1,12 +1,12 @@
 """
-Client-side code for MLFLOW
+Client-side code for MLFlow, used for MLFlow API
 Heavily inspired by mlflow-slurm: https://github.com/ncsa/mlflow-slurm
 """
 
 from mlflow.projects.backend.abstract_backend import AbstractBackend
 from dotenv import load_dotenv
 
-from .backends.GatewayBackend import GatewayProjectBackend
+from .backends.GatewayBackend import GatewayProjectBackend, adapter_factory
 
 
 # Debug flag
@@ -23,3 +23,7 @@ def gateway_backend_builder() -> AbstractBackend:
         AbstractBackend: The custom backend instance.
     """
     return GatewayProjectBackend()
+
+
+def get_config():
+    impl = adapter_factory()

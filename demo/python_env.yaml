@@ -1,6 +1,5 @@
 # Python version required to run the project.
 python: "3.10.4"
 dependencies:
-  - mlflow-skinny==2.8.1
-  - cloudpickle==2.2.1
+  - mlflow-skinny
   - numpy==1.26.0

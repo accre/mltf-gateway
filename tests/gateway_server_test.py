@@ -1,10 +1,9 @@
 import os.path
+import shutil
 import tempfile
 import unittest
-import shutil
 
 from mlflow.entities import RunStatus
-from mlflow.projects.submitted_run import SubmittedRun
 
 from mlflow_mltf_gateway.gateway_server import (
     GatewayRunDescription,
@@ -12,7 +11,9 @@ from mlflow_mltf_gateway.gateway_server import (
     get_script,
     MovableFileReference,
     SLURMExecutor,
-    GatewaySubmittedRun,
+)
+from mlflow_mltf_gateway.submitted_runs.server_run import (
+    ServerSideSubmittedRunDescription,
 )
 
 
@@ -64,8 +65,8 @@ class GatewayServerTest(unittest.TestCase):
     def test_execute_hello(self):
         srv = GatewayServer(inside_script="test/inside-noop.sh")
         tarball = get_script("mltf-hello-world.tar.gz")
-        ret = srv.enqueue_run("", tarball, "", {}, {}, "", "", "")
-        self.assertIsInstance(ret, GatewaySubmittedRun)
+        ret = srv.enqueue_run("", tarball, "", {}, {}, "", "", "", "FAKE-TOKEN")
+        self.assertIsInstance(ret, ServerSideSubmittedRunDescription)
         ret.submitted_run.wait()
         self.assertEqual(
             ret.submitted_run.get_status(), RunStatus.to_string(RunStatus.FINISHED)
@@ -74,9 +75,11 @@ class GatewayServerTest(unittest.TestCase):
     def test_client_hello(self):
         srv = GatewayServer(inside_script="test/inside-noop.sh")
         tarball = get_script("mltf-hello-world.tar.gz")
-        client_id = srv.enqueue_run_client("", tarball, "", {}, {}, "", "", "")
+        client_id = srv.enqueue_run_client(
+            "", tarball, "", {}, {}, "", "", "", "FAKE-TOKEN"
+        )
         server_id = srv.reference_to_run(client_id)
-        self.assertIsInstance(server_id, GatewaySubmittedRun)
+        self.assertIsInstance(server_id, ServerSideSubmittedRunDescription)
         server_id.submitted_run.wait()
         self.assertEqual(
             server_id.submitted_run.get_status(),
@@ -89,7 +92,7 @@ class GatewayServerTest(unittest.TestCase):
             executor=SLURMExecutor(), inside_script="test/inside-noop.sh"
         )
         tarball = get_script("mltf-hello-world.tar.gz")
-        ret = srv.enqueue_run("", tarball, "", {}, {}, "", "", "")
+        ret = srv.enqueue_run("", tarball, "", {}, {}, "", "", "", "FAKE-TOKEN")
         # self.assertIsInstance(ret, SubmittedRun)
         ret.wait()
         self.assertEqual(ret.get_status(), RunStatus.to_string(RunStatus.FINISHED))

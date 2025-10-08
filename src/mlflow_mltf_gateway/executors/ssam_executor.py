@@ -1,10 +1,13 @@
-import os
-import tempfile
+import copy
 import json
+import os
 import shlex
+import tempfile
+
 import requests
 
 from .base import ExecutorBase, jinja_env
+from ..data_classes import MovableFileReference
 from ..submitted_runs.ssam_run import SSAMSubmittedRun
 from ..utils import get_ssam_job_description
 
@@ -113,9 +116,17 @@ class SSAMExecutor(ExecutorBase):
         raise RuntimeError(message)
 
     def generate_ssam_template(self, ctx, run_desc):
-        cmdline_resolved = shlex.join([str(x) for x in ctx["commands"]])
+        cmdline = []
+        for x in ctx["commands"]:
+            if isinstance(x, MovableFileReference):
+                x = copy.copy(x)
+                x.update_ref_to_dir("input")
+            cmdline.append(x)
+        cmdline_resolved = shlex.join([str(x) for x in cmdline])
         slurm_template = jinja_env.get_template("slurm-wrapper.sh")
-        return slurm_template.render({"command": cmdline_resolved})
+        ret = slurm_template.render({"command": cmdline_resolved})
+        print(ret)
+        return ret
 
     def run_context_async(self, ctx, run_desc):
         backend_config = run_desc.backend_config
@@ -127,11 +138,12 @@ class SSAMExecutor(ExecutorBase):
             tmp_script.flush()
             entrypoint_script_path = tmp_script.name
 
-        files_to_upload = {
-            "project.tar.gz": run_desc.tarball_path,
-            "outside.sh": ctx["files"]["outside.sh"].target,
-            "inside.sh": ctx["files"]["inside.sh"].target,
-        }
+        files_to_upload = {}
+        for v in ctx["files"].values():
+            new_key = os.path.basename(v.target)
+            if new_key in files_to_upload:
+                raise RuntimeError(f"Attempting to upload duplicate key {new_key}")
+            files_to_upload[new_key] = v.target
 
         if self.slurm_token:
             self._setup_slurm_token(self.ssam_url, self.auth_token, self.slurm_token)

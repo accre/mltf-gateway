@@ -180,6 +180,7 @@ def require_oauth_token(f):
         g.user = {
             "email": decoded.get("email", "NA"),
             "username": decoded.get("name", "NA"),
+            "runtime_token": token,
         }
 
         return f(*args, **kwargs)

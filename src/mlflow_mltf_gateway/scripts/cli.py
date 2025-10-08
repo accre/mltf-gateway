@@ -42,16 +42,16 @@ def handle_list_subcommand(args):
     backend = GatewayProjectBackend()
     to_decode = backend.list(args.all, False)
     if to_decode:
-        print("Runs:")
+        print("Tasks:")
         to_decode.sort(key=lambda x: x["creation_time"])
         for j in to_decode:
-            # Jeeze this is long...
             time_format = "%Y-%m-%d@%H:%M:%S"
+            # Jeeze this is long...
             print(
                 f"  {datetime.fromtimestamp(j['creation_time'], timezone.utc).astimezone().strftime(time_format)} - {j['gateway_id']}"
             )
     else:
-        print("No Runs found.")
+        print("No Tasks found.")
 
 
 @require_auth

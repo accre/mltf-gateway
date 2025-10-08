@@ -14,7 +14,7 @@ class BackendAdapter:
     @abstractmethod
     def enqueue_run(
         self,
-        mlflow_run,
+        run_id,
         project_tarball,
         entry_point,
         params,

@@ -33,9 +33,7 @@ class ClientSideSubmittedRun(SubmittedRun):
         Returns:
             ClientSideSubmittedRun: New instance with the provided values
         """
-        import pprint
 
-        pprint.pprint(data)
         return cls(adapter, data["run_id"], data["gateway_id"], data["creation_time"])
 
     def wait(self):

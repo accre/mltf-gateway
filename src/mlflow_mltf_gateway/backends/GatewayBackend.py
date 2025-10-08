@@ -2,16 +2,19 @@ import json
 import logging
 import os
 
+import mlflow
 from dotenv import load_dotenv
-from mlflow.projects import (
+from mlflow.projects.backend.abstract_backend import AbstractBackend
+from mlflow.projects.utils import (
     fetch_and_validate_project,
     get_or_create_run,
 )
-from mlflow.projects.backend.abstract_backend import AbstractBackend
 from mlflow.utils.logging_utils import _configure_mlflow_loggers
 
+from mlflow_mltf_gateway.oauth_client import get_access_token
 from ..adapters.LocalAdapter import LocalAdapter
 from ..adapters.RESTAdapter import RESTAdapter
+from ..adapters.base import BackendAdapter
 from ..project_packer import prepare_tarball, produce_tarball
 from ..submitted_runs.client_run import ClientSideSubmittedRun
 
@@ -19,7 +22,7 @@ _configure_mlflow_loggers(root_module_name=__name__)
 _logger = logging.getLogger(__name__)
 
 
-def adapter_factory():
+def adapter_factory() -> BackendAdapter:
     """
     Different "adapters" let the client connect to either a local or remote gateway.
     Abstract it out so there's one place for the configuration stuff to hook
@@ -58,6 +61,12 @@ class GatewayProjectBackend(AbstractBackend):
         tracking_uri,
         experiment_id,
     ):
+        if tracking_uri.startswith("file://"):
+            _logger.warning("""Tracking URI was not set""")
+            # FIXME We should eb able to get this from the server
+            tracking_uri = "https://mlflow-test.mltf.k8s.accre.vanderbilt.edu"
+        mlflow.set_tracking_uri(tracking_uri)
+        os.environ["MLFLOW_TRACKING_TOKEN"] = get_access_token()["access_token"]
 
         impl = adapter_factory()
 
@@ -68,10 +77,10 @@ class GatewayProjectBackend(AbstractBackend):
             with open(config_path, "r") as f:
                 gateway_config = json.load(f)
             backend_config.update(gateway_config)
-
         mlflow_run_obj = get_or_create_run(
             None, project_uri, experiment_id, work_dir, version, entry_point, params
         )
+
         mlflow_run = mlflow_run_obj.info.run_id
         _logger.info("Bundling user environment")
         file_catalog = prepare_tarball(work_dir)

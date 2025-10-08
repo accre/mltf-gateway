@@ -1,5 +1,10 @@
 import functools
+import logging
 import pickle
+import shlex
+import tempfile
+
+log = logging.getLogger(__name__)
 
 from mlflow_mltf_gateway.submitted_runs.server_run import (
     ServerSideSubmittedRunDescription,
@@ -63,6 +68,7 @@ class GatewayServer:
         executor: ExecutorBase = None,
         inside_script="",
         outside_script="",
+        tracking_server="",
     ):
         if executor:
             self.executor = executor
@@ -77,6 +83,9 @@ class GatewayServer:
                 raise ValueError(f"Unknown executor: {executor_name}")
         self.inside_script = inside_script or "inside.sh"
         self.outside_script = outside_script or "outside.sh"
+        self.tracking_server = (
+            tracking_server or "https://mlflow-test.mltf.k8s.accre.vanderbilt.edu"
+        )
         # List of runs we know about
         # Should be persisted to a database
         self.runs = unpersist_runs()
@@ -144,20 +153,24 @@ class GatewayServer:
         tracking_uri,
         experiment_id,
         user_subj,
+        runtime_token,
     ):
         """
         Takes the user request, then submits to a job backend on their behalf (either local or SLURM)
 
-        :param run_id: MLFlow RunID
         :param tarball_path: Path to the users' sandbox
         :param entry_point: Entry point to execute (from MLProject config)
-        :param params: Paramaters to pass to task (from MLProject config)
+        :param params: Parameters to pass to task (from MLProject config)
         :param backend_config: MLTF backend config, hardware requests, etc.. (from MLProject config)
         :param tracking_uri: What URI to use to send MLFlow logging (from client env if provided, default set otherwise)
         :param experiment_id: What experiment to group this run under (from client if provided)
         :param user_subj: Subject of the user submitting task (string) (from REST layer)
+        :param runtime_token: Token to be passed to the job during execution (string)
         :return: A SubmittedRun describing the asynchronously-running task
         """
+        if tracking_uri.startswith("file:"):
+            log.warning(f"Overriding tracking server")
+            tracking_uri = self.tracking_server
 
         run_desc = GatewayRunDescription(
             run_id,
@@ -170,8 +183,9 @@ class GatewayServer:
             user_subj,
         )
 
+        # FIXME generate command line and environment source script and pass here
         exec_context = self.get_execution_snippet(
-            run_desc, self.inside_script, self.outside_script
+            run_desc, self.inside_script, self.outside_script, runtime_token
         )
 
         async_req = self.executor.run_context_async(exec_context, run_desc)
@@ -183,14 +197,18 @@ class GatewayServer:
     # See docs for RunReference for an explanation
     enqueue_run_client = return_id_decorator(enqueue_run)
 
-    @staticmethod
     def get_execution_snippet(
-        run_desc, inside_script="inside.sh", outside_script="outside.sh"
+        self,
+        run_desc,
+        inside_script="inside.sh",
+        outside_script="outside.sh",
+        runtime_token=None,
     ):
         """
         :param run_desc: Descriptor provided by MLFlow
         :param inside_script: Script to run inside the container
         :param outside_script: Script which executes the container, passing control to the inside_script
+        :param runtime_token: User token which will be used to talk to tracking server
         :return: what to run - list of files, then a list of lists for command lines
         """
         input_files = {
@@ -198,14 +216,35 @@ class GatewayServer:
             "inside.sh": MovableFileReference(get_script(inside_script)),
             "client-tarball": MovableFileReference(run_desc.tarball_path),
         }
-        # FIXME point input files to input_files dict so files can be moved
+
+        # Will be sourced at the beginning of inside.sh to set up environment variables
+        # We need to do this as late as possible so the token isn't visible in
+        # (e.g.) the command line args
+        env_vars = [f"export MLFLOW_TRACKING_URI={shlex.quote(self.tracking_server)}"]
+        if run_desc.run_id not in ("", "UNKNOWN"):
+            env_vars.append(f"export MLFLOW_RUN_ID={shlex.quote(run_desc.run_id)}")
+        if runtime_token:
+            env_vars.append(
+                f"export MLFLOW_TRACKING_TOKEN={shlex.quote(runtime_token)}"
+            )
+        with tempfile.NamedTemporaryFile(delete=False) as f:
+            input_files["mltf_env.sh"] = MovableFileReference(f.name)
+            for x in env_vars:
+                f.write(x.encode("utf-8"))
+                f.write("\n".encode("utf-8"))
+            f.flush()
+            f.close()
+
         cmdline = [
             "/bin/bash",
-            "input/outside.sh",
+            input_files["outside.sh"],
             "-i",
-            "input/inside.sh",
+            input_files["inside.sh"],
             "-t",
-            "input/project.tar.gz",
+            input_files["client-tarball"],
+            "-s",
+            input_files["mltf_env.sh"],
         ]
         all_lines = cmdline
+
         return {"commands": all_lines, "files": input_files}

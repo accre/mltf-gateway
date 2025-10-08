@@ -1,8 +1,10 @@
 import logging
 import shutil
 import tempfile
+import time
 
 from mlflow_mltf_gateway.adapters.base import BackendAdapter
+from mlflow_mltf_gateway.oauth_client import get_access_token
 
 _logger = logging.getLogger(__name__)
 
@@ -47,7 +49,7 @@ class LocalAdapter(BackendAdapter):
         return self.gw
 
     def list(self, list_all):
-        return self.gw.list_runs(list_all)
+        return self.gw.list(list_all, LOCAL_ADAPTER_USER_SUBJECT)
 
     def wait(self, run_id):
         return self.gw.wait(run_id)
@@ -57,7 +59,7 @@ class LocalAdapter(BackendAdapter):
 
     def enqueue_run(
         self,
-        mlflow_run,
+        run_id,
         project_tarball,
         entry_point,
         params,
@@ -76,7 +78,7 @@ class LocalAdapter(BackendAdapter):
         # in the SubmittedRun object the client expects
 
         run_reference = self.gw.enqueue_run_client(
-            mlflow_run,
+            run_id,
             tarball_copy.name,
             entry_point,
             params,
@@ -84,8 +86,10 @@ class LocalAdapter(BackendAdapter):
             tracking_uri,
             experiment_id,
             LOCAL_ADAPTER_USER_SUBJECT,
+            get_access_token(),
         )
-        ret = ClientSideSubmittedRun(self, mlflow_run, run_reference.index)
+
+        ret = ClientSideSubmittedRun(self, run_reference.gateway_id, time.time())
         return ret
 
     def get_config(self):

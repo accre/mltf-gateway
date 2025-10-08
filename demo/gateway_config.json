@@ -2,12 +2,10 @@
   "url": "https://gateway-dev-mltf.k8s.accre.vanderbilt.edu",
   "job_name": "mlflow-example-job",
   "nodes": 1,
-  "ntasks-per-node": 1,
-  "cpus-per-task": 8,
+  "cpus-per-task": 1,
   "partition": "batch",
-  "mem": "80g",
+  "mem": "8192",
   "time": 3600,
-  "modules": ["cudnn/v8.2.4", "cuda/11.4.1"],
   "environment": [
       "MY_ENV_VAR=value",
       "TERM=dumb"

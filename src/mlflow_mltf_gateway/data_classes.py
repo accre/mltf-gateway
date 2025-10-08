@@ -27,6 +27,15 @@ class MovableFileReference:
         self.target = target
         return self
 
+    def update_ref_to_dir(self, target_dir: str):
+        """
+        In a case where the file will be placed by someone else (e.g. SLURM moving to CWD),
+        update our local reference to where we expect the file will be
+        :param target_dir:
+        :return:
+        """
+        self.target = os.path.join(target_dir, os.path.basename(self.target))
+
     def __str__(self):
         return self.target
 

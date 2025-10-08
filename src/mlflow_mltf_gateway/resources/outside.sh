@@ -4,6 +4,7 @@
 # Runs inside.sh within a containerization environment
 #
 
+set -ex
 
 function echo_error() {
   # shellcheck disable=SC2238
@@ -13,14 +14,17 @@ function echo_error() {
 debug=false
 inside_file="$(pwd)/inside.sh"
 initial_dir="$(pwd)"
-run_id="0"
 
-while getopts "di:t:r:" opt; do
+while getopts "di:t:c:s:" opt; do
   case $opt in
   d) debug=true ;;
   i) inside_file="$OPTARG" ;;
 	t) tarball="$OPTARG" ;;
-  r) run_id="$OPTARG" ;;
+  # MLTF-generated script to be sourced just before execution
+  # Since this is used to carry keys, it will be deleted/moved somewhere else
+  s) source_path="$OPTARG" ;;
+  # File containing arguments to be passed to mltf run
+  c) cmdline_path="$OPTARG" ;;
 	\?)
       echo_error "Invalid option: -$OPTARG"
       exit 1
@@ -60,8 +64,25 @@ if [ "$debug" == "true" ]; then
 fi
 
 mkdir -p "${tempdir}"/{mltf-input,venvs,mltf-output}
-cp ${tarball} "${tempdir}"/mltf-input/mlflow-input.tar.gz
-cp ${inside_file} "${tempdir}"/mltf-input/inside.sh
+cp "${tarball}" "${tempdir}"/mltf-input/mlflow-input.tar.gz
+cp "${inside_file}" "${tempdir}"/mltf-input/inside.sh
+
+# FIXME bomb if there is a source_path or cmdline_path argument passed in but doesn't exist
+source_arg=""
+if [[ -n "${source_path}" && -e "${source_path}" ]]; then
+  cp "${source_path}" "${tempdir}"/mltf-input/mltf-source
+  source_arg=" -s /tmp/mltf-input/mltf-source"
+fi
+
+cmdline_arg=""
+if [[ -n "${cmdline_path}" && -e "${cmdline_path}" ]]; then
+  cp "${cmdline_path}" "${tempdir}"/mltf-input/mltf-cmdline
+  cmdline_arg=" -c /tmp/mltf-input/mltf-cmdline"
+elif [[ -n "${cmdline_path}" ]]; then
+  2>&1 echo "ERROR: Environment script was specified but not found"
+  exit 1
+fi
+
 cd "${tempdir}" || exit 1
 outdir="$(mktemp -d -p "$initial_dir" mltf-output-XXXXXX)"
 console_output="${outdir}/stdout.txt"
@@ -70,15 +91,20 @@ echo "Outputs placed in ${outdir}"
 # FIXME: Need to generatlize nerdctl/docker/podman and apptainer/singularity
 #        paths here
 if command -v nerdctl >&/dev/null; then
+  # shellcheck disable=SC2086
+  # We want to take the bytes as written for cmdline_arg and source_arg
   nerdctl run -i \
-    -v "${tempdir}":/tmp/ --rm=true \
+    -v "${tempdir}":/tmp/ -v "${tempdir}":/tmp/mltf-output --rm=true \
     ghcr.io/perilousapricot/mltf-rocky9 \
     -- \
-    /bin/bash /tmp/mltf-input/inside.sh -t /tmp/mltf-input/mlflow-input.tar.gz -r "${run_id}" &>"${console_output}"
+    /bin/bash /tmp/mltf-input/inside.sh -t /tmp/mltf-input/mlflow-input.tar.gz ${cmdline_arg} ${source_arg} 2>&1 | tee "${console_output}"
 elif command -v apptainer >&/dev/null; then
   #
   # I don't think these are the right bind params but let's roll with it
   #
+
+  # see above
+  # shellcheck disable=SC2086
   apptainer run \
     --nv \
     --writable-tmpfs \
@@ -86,9 +112,10 @@ elif command -v apptainer >&/dev/null; then
     --pid \
     --env MLFLOW_ENV_ROOT=/tmp/venvs \
     -B "${tempdir}":/tmp/:rw \
+    -B "${outdir}":/tmp/mltf-output:rw \
     docker://ghcr.io/perilousapricot/mltf-rocky9 \
     -- \
-    /bin/bash /tmp/mltf-input/inside.sh -t /tmp/mltf-input/mlflow-input.tar.gz -r "${run_id}" &>"${console_output}"
+    /bin/bash /tmp/mltf-input/inside.sh -t /tmp/mltf-input/mlflow-input.tar.gz ${cmdline_arg} ${source_arg} 2>&1 | tee "${console_output}"
 else
   echo_error "Can't find containerization engine. Please add one"
   exit 1

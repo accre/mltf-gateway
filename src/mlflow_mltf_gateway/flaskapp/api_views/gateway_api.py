@@ -12,7 +12,12 @@ gateway_api_bp = Blueprint("gateway_api", __name__)
 @require_oauth_token
 def secure_data():
     return jsonify(
-        {"message": "Hello", "email": g.user["email"], "username": g.user["username"]}
+        {
+            "message": "Hello",
+            "email": g.user["email"],
+            "username": g.user["username"],
+            "runtime_token": g.user["runtime_token"],
+        }
     )
 
 
@@ -31,14 +36,15 @@ def submit():
     Returns:
         JSON response with job reference details
     """
-    tarball = request.files["tarball"]
     run_id = request.form["run_id"]
+    tarball = request.files["tarball"]
     entry_point = request.form["entry_point"]
     params = json.loads(request.form["params"])
     backend_config = json.loads(request.form["backend_config"])
     tracking_uri = request.form["tracking_uri"]
     experiment_id = request.form["experiment_id"]
     user_subj = g.user["username"]
+    runtime_token = g.user["runtime_token"]
 
     with tempfile.NamedTemporaryFile(delete=False) as tmp:
         tarball.save(tmp.name)
@@ -52,6 +58,7 @@ def submit():
             tracking_uri=tracking_uri,
             experiment_id=experiment_id,
             user_subj=user_subj,
+            runtime_token=runtime_token,
         )
         return jsonify(run_reference.__dict__)
 
