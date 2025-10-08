@@ -10,7 +10,7 @@ class LocalExecutor(ExecutorBase):
     Executor that runs jobs locally
     """
 
-    def run_context_async(self, ctx, run_desc, runtime_token):
+    def run_context_async(self, ctx, run_desc):
         cmdline_resolved = [str(x) for x in ctx["commands"]]
         child = subprocess.Popen(args=cmdline_resolved, start_new_session=True)
         # Racy, but we can at least try to see if the job fails immediately

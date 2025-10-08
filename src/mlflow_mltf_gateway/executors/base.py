@@ -35,12 +35,11 @@ class ExecutorBase:
     Base class for executors
     """
 
-    def run_context_async(self, ctx, run_desc, runtime_token):
+    def run_context_async(self, ctx, run_desc):
         """
         Executes a task asynchronosly
         :param ctx: execution context - input files and command line to execute
         :param run_desc: run descriptor
-        :param runtime_token: users access token used to talk to tracking server
         :return:
         """
         raise NotImplementedError("This method should be overridden by subclasses")

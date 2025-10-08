@@ -86,10 +86,10 @@ class LocalAdapter(BackendAdapter):
             tracking_uri,
             experiment_id,
             LOCAL_ADAPTER_USER_SUBJECT,
-            get_access_token(),
+            get_access_token()['access_token'],
         )
 
-        ret = ClientSideSubmittedRun(self, run_reference.gateway_id, time.time())
+        ret = ClientSideSubmittedRun(self, run_id, run_reference.gateway_id, time.time())
         return ret
 
     def get_config(self):

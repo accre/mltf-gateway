@@ -21,5 +21,6 @@ class GatewayClientTestCase(unittest.TestCase):
             ret.get_status(),
         )
 
+
 if __name__ == "__main__":
     unittest.main()

@@ -11,7 +11,7 @@ if __name__ == "__main__":
     print("Here is a numpy array:", a)
     with mlflow.start_run():
         mlflow.log_param("Example_param", 0.001)
-        mlflow.log_text(open(__file__,"r").read(), "source.py")
+        mlflow.log_text(open(__file__, "r").read(), "source.py")
     print("The sum of the array is:", numpy.sum(a))
     print("Exiting now.")
     exit(0)
