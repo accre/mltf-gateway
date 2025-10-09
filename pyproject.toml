@@ -33,6 +33,7 @@ dependencies = [
     "flask",
     "flask-login",
     "flask-sqlalchemy",
+    "gunicorn",
     "jinja2",
     "keyring",
     "keyrings.cryptfile @ git+https://github.com/frispete/keyrings.cryptfile@3da26edf2f673a3fcd20ca093c7a999b77a23c56 ; sys_platform == 'linux'",
