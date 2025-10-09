@@ -1,5 +1,6 @@
 import functools
 import logging
+import os
 import pickle
 import shlex
 import tempfile
@@ -235,6 +236,21 @@ class GatewayServer:
             f.flush()
             f.close()
 
+        with tempfile.NamedTemporaryFile(delete=False) as f:
+            input_files["mltf_cmd.sh"] = MovableFileReference(f.name)
+            cmdline = ""
+            if run_desc.run_id not in ("", "UNKNOWN"):
+                cmdline += f" --run-id {shlex.quote(run_desc.run_id)}"
+            if cmdline:
+                f.write(cmdline.encode("utf-8"))
+                f.write("\n".encode("utf-8"))
+                f.flush()
+                f.close()
+            else:
+                f.close()
+                del input_files["mltf_cmd.sh"]
+                os.remove(f.name)
+
         cmdline = [
             "/bin/bash",
             input_files["outside.sh"],
@@ -245,6 +261,9 @@ class GatewayServer:
             "-s",
             input_files["mltf_env.sh"],
         ]
+        if "mltf_cmd.sh" in input_files:
+            cmdline.extend(["-c", input_files["mltf_cmd.sh"]])
+
         all_lines = cmdline
 
         return {"commands": all_lines, "files": input_files}

@@ -72,8 +72,10 @@ source_arg=""
 if [[ -n "${source_path}" && -e "${source_path}" ]]; then
   cp "${source_path}" "${tempdir}"/mltf-input/mltf-source
   source_arg=" -s /tmp/mltf-input/mltf-source"
+elif [[ -n "${source_path}" ]]; then
+  2>&1 echo "ERROR: Command line args was specified but not found"
+  exit 1
 fi
-
 cmdline_arg=""
 if [[ -n "${cmdline_path}" && -e "${cmdline_path}" ]]; then
   cp "${cmdline_path}" "${tempdir}"/mltf-input/mltf-cmdline

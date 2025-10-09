@@ -4,12 +4,14 @@
 
 
 import argparse
-from operator import itemgetter
+import logging
 
 import jwt
 import os.path
 import sys
 from datetime import datetime, timezone
+
+log = logging.getLogger("mltf-cli")
 
 # Import OAuth2 client
 from mlflow_mltf_gateway.oauth_client import (

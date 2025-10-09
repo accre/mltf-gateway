@@ -2,14 +2,17 @@ import json
 import logging
 import os
 
+import jwt
 import mlflow
 from dotenv import load_dotenv
+from mlflow import tracking
 from mlflow.projects.backend.abstract_backend import AbstractBackend
 from mlflow.projects.utils import (
     fetch_and_validate_project,
     get_or_create_run,
 )
 from mlflow.utils.logging_utils import _configure_mlflow_loggers
+from mlflow.utils.mlflow_tags import MLFLOW_USER
 
 from mlflow_mltf_gateway.oauth_client import get_access_token
 from ..adapters.LocalAdapter import LocalAdapter
@@ -66,7 +69,8 @@ class GatewayProjectBackend(AbstractBackend):
             # FIXME We should eb able to get this from the server
             tracking_uri = "https://mlflow-test.mltf.k8s.accre.vanderbilt.edu"
         mlflow.set_tracking_uri(tracking_uri)
-        os.environ["MLFLOW_TRACKING_TOKEN"] = get_access_token()["access_token"]
+        creds = get_access_token()
+        os.environ["MLFLOW_TRACKING_TOKEN"] = creds["access_token"]
 
         impl = adapter_factory()
 
@@ -81,7 +85,13 @@ class GatewayProjectBackend(AbstractBackend):
             None, project_uri, experiment_id, work_dir, version, entry_point, params
         )
 
+        decoded = jwt.decode(creds["access_token"], options={"verify_signature": False})
+
+        tracking.MlflowClient().set_tag(
+            mlflow_run_obj.info.run_id, MLFLOW_USER, decoded["preferred_username"]
+        )
         mlflow_run = mlflow_run_obj.info.run_id
+
         _logger.info("Bundling user environment")
         file_catalog = prepare_tarball(work_dir)
         tarball_limit = 1024 * 1024 * 1024  # 1Gigabyte
@@ -106,6 +116,9 @@ class GatewayProjectBackend(AbstractBackend):
                 experiment_id,
             )
             _logger.info(f"Execution enqueued: {ret}")
+            _logger.info(
+                f"Find your MLFlow run at {tracking_uri}/#/experiments/{experiment_id}/runs/{mlflow_run} "
+            )
             return ret
         finally:
             if project_tarball and os.path.exists(project_tarball):
