@@ -7,6 +7,7 @@ import argparse
 import logging
 
 import jwt
+import os
 import os.path
 import sys
 from datetime import datetime, timezone
@@ -90,7 +91,7 @@ def handle_submit_subcommand(args):
         tracking_uri="https://mlflow-test.mltf.k8s.accre.vanderbilt.edu",
         experiment_id="0",
     )
-    print(f"Submitted run_id {ret} to MLTF")
+    print(f"Submitted project to MLTF: {ret['gateway_id']}")
 
 
 @require_auth
