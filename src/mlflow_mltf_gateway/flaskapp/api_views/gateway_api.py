@@ -77,6 +77,10 @@ def show_job(job_id):
     gateway_server = current_app.extensions["mltf_gateway"]
     show_logs = request.args.get("show_logs", "false").lower() == "true"
     details = gateway_server.show_details(job_id, show_logs)
+    if isinstance(details, tuple) and len(details) == 2:
+        response, status_code = details
+        return jsonify(response), status_code
+
     return jsonify(details), 200
 
 
@@ -85,4 +89,8 @@ def show_job(job_id):
 def delete_job(job_id):
     gateway_server = current_app.extensions["mltf_gateway"]
     result = gateway_server.delete(job_id)
-    return jsonify(result), 200
+    if isinstance(result, tuple) and len(result) == 2:
+        response, status_code = result
+        return jsonify(response), status_code
+    else:
+        return jsonify(result), 200

@@ -153,7 +153,11 @@ class GatewayServer:
     def show_details(self, run_id: str, show_logs: bool):
         """Get details of a run."""
         run_ref = RunReference(run_id)
-        submitted_run = self.reference_to_run(run_ref).submitted_run
+        try:
+            submitted_run = self.reference_to_run(run_ref).submitted_run
+        except IndexError:
+            return {"error": f"Run with ID '{run_id}' not found."}, 404
+
         if hasattr(submitted_run, 'get_run_details'):
             return submitted_run.get_run_details(show_logs)
         else:
@@ -165,7 +169,10 @@ class GatewayServer:
     def delete(self, run_id: str):
         """Delete a run."""
         run_ref = RunReference(run_id)
-        run_to_delete = self.reference_to_run(run_ref)
+        try:
+            run_to_delete = self.reference_to_run(run_ref)
+        except IndexError:
+            return {"error": f"Run with ID '{run_id}' not found."}, 404
 
         run_to_delete.submitted_run.cancel()
         self.runs = [run for run in self.runs if run.gateway_id != run_id]
