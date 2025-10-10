@@ -110,9 +110,12 @@ elif command -v apptainer >&/dev/null; then
   apptainer run \
     --nv \
     --writable-tmpfs \
-    --no-mount tmp,cwd \
+    --no-mount tmp,cwd,home \
     --pid \
     --env MLFLOW_ENV_ROOT=/tmp/venvs \
+    -B /cvmfs/:/cvmfs:ro \
+    -B /cms:/cms:ro \
+    -B /lfs_roots:/lfs_roots:ro \
     -B "${tempdir}":/tmp/:rw \
     -B "${outdir}":/tmp/mltf-output:rw \
     docker://ghcr.io/perilousapricot/mltf-rocky9 \
