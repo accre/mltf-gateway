@@ -67,7 +67,7 @@ class SLURMExecutor(ExecutorBase):
         slurm_template = jinja_env.get_template("slurm-wrapper.sh")
         return slurm_template.render({"command": cmdline_resolved})
 
-    def run_context_async(self, ctx, run_desc):
+    def run_context_async(self, ctx, run_desc, gateway_id):
         generated_wrapper = self.generate_slurm_template(ctx, run_desc)
         with tempfile.NamedTemporaryFile(delete=False) as f:
             f.write(generated_wrapper.encode("utf-8"))

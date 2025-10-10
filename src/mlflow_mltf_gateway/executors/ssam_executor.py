@@ -3,14 +3,20 @@ import json
 import os
 import shlex
 import tempfile
+import logging
 
 import requests
+
+from mlflow.utils.logging_utils import _configure_mlflow_loggers
 
 from .base import ExecutorBase, jinja_env
 from ..data_classes import MovableFileReference
 from ..submitted_runs.ssam_run import SSAMSubmittedRun
 from ..utils import get_ssam_job_description
 
+
+_configure_mlflow_loggers(root_module_name=__name__)
+_logger = logging.getLogger(__name__)
 
 class SSAMExecutor(ExecutorBase):
     """
@@ -73,7 +79,7 @@ class SSAMExecutor(ExecutorBase):
         )
         response.raise_for_status()
 
-    def _ssam_request(self, slurm_request, entrypoint_script_path, files):
+    def _ssam_request(self, slurm_request, entrypoint_script_path, files, run_desc, gateway_id):
         headers = {
             "Authorization": f"Bearer {self.auth_token}",
         }
@@ -110,7 +116,9 @@ class SSAMExecutor(ExecutorBase):
         response.raise_for_status()
         response_json = response.json()
         if response_json.get("success"):
-            return response_json.get("data", {}).get("job_uuid")
+            job_uuid = response_json.get("data", {}).get("job_uuid")
+            _logger.info(f"SSAM request created successfully. Gateway ID: {gateway_id}, MLTF UUID: {run_desc.run_id}, SSAM UUID: {job_uuid}")
+            return job_uuid
 
         message = f"SSAM request failed: {response_json.get('message')}"
         raise RuntimeError(message)
@@ -128,7 +136,7 @@ class SSAMExecutor(ExecutorBase):
         print(ret)
         return ret
 
-    def run_context_async(self, ctx, run_desc):
+    def run_context_async(self, ctx, run_desc, gateway_id):
         backend_config = run_desc.backend_config
         slurm_request = get_ssam_job_description(backend_config)
         generated_wrapper = self.generate_ssam_template(ctx, run_desc)
@@ -155,6 +163,8 @@ class SSAMExecutor(ExecutorBase):
             slurm_request,
             entrypoint_script_path,
             files_to_upload,
+            run_desc,
+            gateway_id,
         )
 
         os.remove(entrypoint_script_path)

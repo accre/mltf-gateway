@@ -18,11 +18,10 @@ class ServerSideSubmittedRunDescription:
 
     run_desc: GatewayRunDescription
     submitted_run: SubmittedRun
-    gateway_id: str = field(init=False)
+    gateway_id: str
     creation_time: int = field(init=False)
 
     def __post_init__(self):
-        self.gateway_id = str(uuid.uuid1())
         self.creation_time = int(time.time())
 
     def to_client_json(self):

@@ -4,6 +4,7 @@ import os
 import pickle
 import shlex
 import tempfile
+import uuid
 
 log = logging.getLogger(__name__)
 
@@ -217,8 +218,9 @@ class GatewayServer:
             run_desc, self.inside_script, self.outside_script, runtime_token
         )
 
-        async_req = self.executor.run_context_async(exec_context, run_desc)
-        run = ServerSideSubmittedRunDescription(run_desc, async_req)
+        gateway_id = str(uuid.uuid1())
+        async_req = self.executor.run_context_async(exec_context, run_desc, gateway_id)
+        run = ServerSideSubmittedRunDescription(run_desc, async_req, gateway_id)
         self.runs.append(run)
         persist_runs(self.runs)
         return run
