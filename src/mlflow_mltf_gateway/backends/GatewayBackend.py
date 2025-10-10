@@ -127,8 +127,8 @@ class GatewayProjectBackend(AbstractBackend):
                 experiment_id,
             )
             _logger.info(f"Execution enqueued: {ret}")
-            _logger.info(
-                f"Find your MLFlow run at {tracking_uri}/#/experiments/{experiment_id}/runs/{mlflow_run} "
+            print(
+                f"Find your MLFlow run at {tracking_uri}/#/experiments/{experiment_id}/runs/{mlflow_run}"
             )
             return ret
         finally:
