@@ -4,6 +4,7 @@ import os
 import pickle
 import shlex
 import tempfile
+import uuid
 
 log = logging.getLogger(__name__)
 
@@ -144,6 +145,41 @@ class GatewayServer:
         """
         return self.reference_to_run(run_ref).submitted_run.get_status()
 
+    def show(self, run_id: str):
+        """Get the status of a run."""
+        run_ref = RunReference(run_id)
+        return self.get_status(run_ref)
+
+    def show_details(self, run_id: str, show_logs: bool):
+        """Get details of a run."""
+        run_ref = RunReference(run_id)
+        try:
+            submitted_run = self.reference_to_run(run_ref).submitted_run
+        except IndexError:
+            return {"error": f"Run with ID '{run_id}' not found."}, 404
+
+        if hasattr(submitted_run, 'get_run_details'):
+            return submitted_run.get_run_details(show_logs)
+        else:
+            # Fallback for other run types
+            status = submitted_run.get_status()
+            from mlflow.entities import RunStatus
+            return {"status": RunStatus.to_string(status)}
+
+    def delete(self, run_id: str):
+        """Delete a run."""
+        run_ref = RunReference(run_id)
+        try:
+            run_to_delete = self.reference_to_run(run_ref)
+        except IndexError:
+            return {"error": f"Run with ID '{run_id}' not found."}, 404
+
+        run_to_delete.submitted_run.cancel()
+        self.runs = [run for run in self.runs if run.gateway_id != run_id]
+        persist_runs(self.runs)
+
+        return {"run_id": run_id, "message": "Job deleted successfully"}
+
     def enqueue_run(
         self,
         run_id,
@@ -189,8 +225,9 @@ class GatewayServer:
             run_desc, self.inside_script, self.outside_script, runtime_token
         )
 
-        async_req = self.executor.run_context_async(exec_context, run_desc)
-        run = ServerSideSubmittedRunDescription(run_desc, async_req)
+        gateway_id = str(uuid.uuid1())
+        async_req = self.executor.run_context_async(exec_context, run_desc, gateway_id)
+        run = ServerSideSubmittedRunDescription(run_desc, async_req, gateway_id)
         self.runs.append(run)
         persist_runs(self.runs)
         return run

@@ -56,3 +56,11 @@ class BackendAdapter:
     @abstractmethod
     def get_tracking_server(self):
         raise NotImplementedError()
+
+    @abstractmethod
+    def show_details(self, run_id, show_logs):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def delete(self, run_id):
+        raise NotImplementedError()

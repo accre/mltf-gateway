@@ -3,12 +3,14 @@
   "job_name": "mlflow-example-job",
   "nodes": 1,
   "cpus-per-task": 1,
-  "partition": "batch",
   "mem": "8192",
   "time": 3600,
+  "partition": "batch_gpu",
+  "account": "mltf_acc",
+  "gres": "gpu:nvidia_geforce_rtx_2080_ti:1",
   "environment": [
-      "MY_ENV_VAR=value",
-      "TERM=dumb"
+    "MY_ENV_VAR=value",
+    "TERM=dumb"
   ],
   "debug": true
 }

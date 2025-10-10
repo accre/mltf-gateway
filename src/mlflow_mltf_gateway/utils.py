@@ -38,13 +38,10 @@ def get_ssam_job_description(backend_config: dict) -> dict:
     :param backend_config: The backend configuration dictionary.
     :return: A dictionary of Slurm directives.
     """
-    return {
-        "job_name": backend_config.get("job_name", "mlflow-job"),
-        "partition": backend_config.get("partition", "batch"),
-        "nodes": backend_config.get("nodes", 1),
-        "ntasks-per-node": backend_config.get("ntasks-per-node", 1),
-        "cpus-per-task": backend_config.get("cpus-per-task", 1),
-        "mem": backend_config.get("mem", "4096"),
-        "time": backend_config.get("time", "00:20:00"),
-        "gpus": backend_config.get("gpus", None),
-    }
+    new_config = backend_config.copy()
+    if "url" in new_config:
+        del new_config["url"]
+    if "auth_token" in new_config:
+        del new_config["auth_token"]
+
+    return new_config

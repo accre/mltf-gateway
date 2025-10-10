@@ -57,6 +57,12 @@ class LocalAdapter(BackendAdapter):
     def get_status(self, run_id):
         return self.gw.get_status(run_id)
 
+    def show_details(self, run_id, show_logs):
+        return self.gw.show(run_id)
+
+    def delete(self, run_id):
+        return self.gw.delete(run_id)
+
     def enqueue_run(
         self,
         run_id,

@@ -35,7 +35,7 @@ class ExecutorBase:
     Base class for executors
     """
 
-    def run_context_async(self, ctx, run_desc):
+    def run_context_async(self, ctx, run_desc, gateway_id):
         """
         Executes a task asynchronosly
         :param ctx: execution context - input files and command line to execute

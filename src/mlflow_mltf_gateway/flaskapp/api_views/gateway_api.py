@@ -71,14 +71,26 @@ def list_jobs():
     return jsonify(jobs), 200
 
 
-@gateway_api_bp.route("/job/<job_id>", methods=["GET"])
+@gateway_api_bp.route("/jobs/<job_id>", methods=["GET"])
 @require_oauth_token
-def status(job_id):
-    status = "running"
-    return jsonify({"job_id": job_id, "status": status}), 200
+def show_job(job_id):
+    gateway_server = current_app.extensions["mltf_gateway"]
+    show_logs = request.args.get("show_logs", "false").lower() == "true"
+    details = gateway_server.show_details(job_id, show_logs)
+    if isinstance(details, tuple) and len(details) == 2:
+        response, status_code = details
+        return jsonify(response), status_code
+
+    return jsonify(details), 200
 
 
-@gateway_api_bp.route("/job/<job_id>", methods=["DELETE"])
+@gateway_api_bp.route("/jobs/<job_id>", methods=["DELETE"])
 @require_oauth_token
-def result(job_id):
-    return jsonify({"job_id": job_id, "message": "Job cancelled"}), 200
+def delete_job(job_id):
+    gateway_server = current_app.extensions["mltf_gateway"]
+    result = gateway_server.delete(job_id)
+    if isinstance(result, tuple) and len(result) == 2:
+        response, status_code = result
+        return jsonify(response), status_code
+    else:
+        return jsonify(result), 200

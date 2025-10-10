@@ -40,6 +40,7 @@ class SSAMSubmittedRun:
         self._auth_token = auth_token
         self.user_subject = user_subject
         self._status = RunStatus.SCHEDULED
+        self._failure_reason = None
         self._status_lock = RLock()
 
     # How often to poll run status when waiting on a run
@@ -78,7 +79,7 @@ class SSAMSubmittedRun:
                 "Authorization": f"Bearer {self._auth_token}",
             }
             response = requests.get(
-                f"{self._ssam_url}/slurm/{self.job_id}/output",
+                f"{self._ssam_url}/api/slurm/{self.job_id}/output",
                 headers=headers,
                 timeout=30,
             )
@@ -104,19 +105,54 @@ class SSAMSubmittedRun:
             headers = {
                 "Authorization": f"Bearer {self._auth_token}",
             }
-            # The SSAM API doc does not specify a cancel endpoint. Assuming one here.
-            response = requests.delete(
-                f"{self._ssam_url}/slurm/{self.job_id}", headers=headers, timeout=30
+            response = requests.post(
+                f"{self._ssam_url}/api/slurm/{self.job_id}/cancel", headers=headers, timeout=30
             )
             response.raise_for_status()
-            self._update_status()
+            _logger.info(f"Successfully sent cancel request for job {self.job_id}")
         except requests.exceptions.RequestException as e:
-            message = f"Error canceling job {self.job_id}: {e}"
-            _logger.error(message)
+            _logger.warning(f"Could not cancel job {self.job_id} via API (it may be already completed): {e}")
+
+        self._update_status()
 
     def get_status(self) -> RunStatus:
         self._update_status()
         return self._status
+
+    def get_run_details(self, show_logs=False):
+        status = self.get_status()
+
+        if status is None:
+            return {"status": "UNKNOWN", "failure_reason": "Could not retrieve status from SSAM."}
+
+        details = {"status": RunStatus.to_string(status)}
+        if status == RunStatus.FAILED and self._failure_reason:
+            details["failure_reason"] = self._failure_reason
+
+        if show_logs:
+            details["logs"] = self.get_logs()
+
+        return details
+
+    def get_logs(self):
+        try:
+            headers = {
+                "Authorization": f"Bearer {self._auth_token}",
+            }
+            response = requests.get(
+                f"{self._ssam_url}/api/slurm/{self.job_id}/output",
+                headers=headers,
+                timeout=30,
+            )
+            response.raise_for_status()
+            response_json = response.json()
+            if response_json.get("success"):
+                log_data = response_json.get("data", {})
+                if log_data:
+                    return next(iter(log_data.values()))
+        except requests.exceptions.RequestException as e:
+            _logger.error(f"Error fetching logs for job {self.job_id}: {e}")
+        return None
 
     def _update_status(self) -> RunStatus:
         try:
@@ -124,7 +160,7 @@ class SSAMSubmittedRun:
                 "Authorization": f"Bearer {self._auth_token}",
             }
             response = requests.get(
-                f"{self._ssam_url}/slurm/{self.job_id}", headers=headers, timeout=30
+                f"{self._ssam_url}/api/slurm/{self.job_id}", headers=headers, timeout=30
             )
             response.raise_for_status()
             response_json = response.json()
@@ -139,6 +175,9 @@ class SSAMSubmittedRun:
                         self._status = RunStatus.FINISHED
                     elif job_state == "FAILED":
                         self._status = RunStatus.FAILED
+                        self._failure_reason = response_json.get("data", {}).get(
+                            "failure_reason"
+                        )
                     elif job_state == "RUNNING":
                         self._status = RunStatus.RUNNING
                     else:
