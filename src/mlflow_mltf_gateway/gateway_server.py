@@ -158,12 +158,13 @@ class GatewayServer:
         except IndexError:
             return {"error": f"Run with ID '{run_id}' not found."}, 404
 
-        if hasattr(submitted_run, 'get_run_details'):
+        if hasattr(submitted_run, "get_run_details"):
             return submitted_run.get_run_details(show_logs)
         else:
             # Fallback for other run types
             status = submitted_run.get_status()
             from mlflow.entities import RunStatus
+
             return {"status": RunStatus.to_string(status)}
 
     def delete(self, run_id: str):

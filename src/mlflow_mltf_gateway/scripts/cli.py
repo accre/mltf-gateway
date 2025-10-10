@@ -46,15 +46,16 @@ def handle_show_subcommand(args):
 
     print(f"Status: {details.get('status')}")
 
-    if 'failure_reason' in details:
+    if "failure_reason" in details:
         print(f"Failure Reason: {details.get('failure_reason')}")
 
-    if 'logs' in details and details['logs'] is not None:
+    if "logs" in details and details["logs"] is not None:
         print("--- Logs ---")
-        print(details['logs'])
+        print(details["logs"])
     elif args.show_logs:
         print("--- Logs ---")
         print("(No logs available)")
+
 
 # Subcommand function definitions (grouped together)
 @require_auth
@@ -78,10 +79,6 @@ def handle_list_subcommand(args):
 @require_auth
 def handle_submit_subcommand(args):
     """Handle the 'submit' subcommand."""
-    if args.name:
-        print(f"Submitting item: {args.name}")
-    else:
-        print("Please provide a name for the new item.")
 
     backend = GatewayProjectBackend()
     ret = backend.run(
@@ -185,11 +182,6 @@ def create_parser():
     # Submit command
     submit_parser = subparsers.add_parser("submit", help="Submit a new MLTF job")
     submit_parser.add_argument(
-        "--name",
-        required=True,
-        help="Name of the item to submit",
-    )
-    submit_parser.add_argument(
         "--dir",
         "-d",
         default=os.path.curdir,
@@ -212,7 +204,9 @@ def create_parser():
     # show command
     show_parser = subparsers.add_parser("show", help="Show the status of a job")
     show_parser.add_argument("run_id", help="The ID of the run to show")
-    show_parser.add_argument("--show-logs", action="store_true", help="Show logs of the run")
+    show_parser.add_argument(
+        "--show-logs", action="store_true", help="Show logs of the run"
+    )
 
     # Server command
     server_parser = subparsers.add_parser(

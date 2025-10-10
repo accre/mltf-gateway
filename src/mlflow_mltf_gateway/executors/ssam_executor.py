@@ -18,6 +18,7 @@ from ..utils import get_ssam_job_description
 _configure_mlflow_loggers(root_module_name=__name__)
 _logger = logging.getLogger(__name__)
 
+
 class SSAMExecutor(ExecutorBase):
     """
     Executor that submits jobs to a Slurm cluster via SSAM server
@@ -79,7 +80,9 @@ class SSAMExecutor(ExecutorBase):
         )
         response.raise_for_status()
 
-    def _ssam_request(self, slurm_request, entrypoint_script_path, files, run_desc, gateway_id):
+    def _ssam_request(
+        self, slurm_request, entrypoint_script_path, files, run_desc, gateway_id
+    ):
         headers = {
             "Authorization": f"Bearer {self.auth_token}",
         }
@@ -117,7 +120,9 @@ class SSAMExecutor(ExecutorBase):
         response_json = response.json()
         if response_json.get("success"):
             job_uuid = response_json.get("data", {}).get("job_uuid")
-            _logger.info(f"SSAM request created successfully. Gateway ID: {gateway_id}, MLTF UUID: {run_desc.run_id}, SSAM UUID: {job_uuid}")
+            _logger.info(
+                f"SSAM request created successfully. Gateway ID: {gateway_id}, MLTF UUID: {run_desc.run_id}, SSAM UUID: {job_uuid}"
+            )
             return job_uuid
 
         message = f"SSAM request failed: {response_json.get('message')}"

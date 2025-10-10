@@ -106,12 +106,16 @@ class SSAMSubmittedRun:
                 "Authorization": f"Bearer {self._auth_token}",
             }
             response = requests.post(
-                f"{self._ssam_url}/api/slurm/{self.job_id}/cancel", headers=headers, timeout=30
+                f"{self._ssam_url}/api/slurm/{self.job_id}/cancel",
+                headers=headers,
+                timeout=30,
             )
             response.raise_for_status()
             _logger.info(f"Successfully sent cancel request for job {self.job_id}")
         except requests.exceptions.RequestException as e:
-            _logger.warning(f"Could not cancel job {self.job_id} via API (it may be already completed): {e}")
+            _logger.warning(
+                f"Could not cancel job {self.job_id} via API (it may be already completed): {e}"
+            )
 
         self._update_status()
 
@@ -123,7 +127,10 @@ class SSAMSubmittedRun:
         status = self.get_status()
 
         if status is None:
-            return {"status": "UNKNOWN", "failure_reason": "Could not retrieve status from SSAM."}
+            return {
+                "status": "UNKNOWN",
+                "failure_reason": "Could not retrieve status from SSAM.",
+            }
 
         details = {"status": RunStatus.to_string(status)}
         if status == RunStatus.FAILED and self._failure_reason:
