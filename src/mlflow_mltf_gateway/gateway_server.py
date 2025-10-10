@@ -260,6 +260,7 @@ class GatewayServer:
         # We need to do this as late as possible so the token isn't visible in
         # (e.g.) the command line args
         env_vars = [f"export MLFLOW_TRACKING_URI={shlex.quote(self.tracking_server)}"]
+        env_vars.append(f"export MLFLOW_ENABLE_SYSTEM_METRICS_LOGGING=true")
         if run_desc.run_id not in ("", "UNKNOWN"):
             env_vars.append(f"export MLFLOW_RUN_ID={shlex.quote(run_desc.run_id)}")
         if runtime_token:
