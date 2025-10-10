@@ -93,7 +93,7 @@ fi
 python3 -m venv venv
 source venv/bin/activate
 pip install --upgrade pip
-pip install mlflow-skinny virtualenv
+pip install mlflow-skinny uv virtualenv
 if [[ -n "${SLURM_CPUS_PER_TASK}" ]]; then
   echo "Limiting MAKE_OPTS to ${SLURM_CPUS_PER_TASK} CPUs"
   export MAKE_OPTS=" -j ${SLURM_CPUS_PER_TASK}"
