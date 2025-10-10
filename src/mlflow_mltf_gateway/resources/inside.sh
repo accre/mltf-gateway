@@ -33,7 +33,9 @@ fi
 if [[ -n "${source_path}" && -e "${source_path}" ]]; then
   # shellcheck disable=SC1090
   # This is necessarily an external script, suppress the warning
+  set +x
   source "${source_path}"
+  set -x
   rm -f "${source_path}"
 elif [[ -n "${source_path}" ]]; then
   2>&1 echo "ERROR: Environment script was specified but not found"
