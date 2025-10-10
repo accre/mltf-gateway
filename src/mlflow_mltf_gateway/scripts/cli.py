@@ -65,7 +65,7 @@ def handle_list_subcommand(args):
     to_decode = backend.list(args.all, False)
     if to_decode:
         print("Tasks:")
-        to_decode.sort(key=lambda x: x["creation_time"])
+        to_decode.sort(key=lambda x: x["creation_time"], reverse=True)
         for j in to_decode:
             time_format = "%Y-%m-%d@%H:%M:%S"
             # Jeeze this is long...
