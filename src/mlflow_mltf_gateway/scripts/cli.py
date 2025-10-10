@@ -139,7 +139,7 @@ def handle_auth_status_subcommand(args):
 
 def handle_server_subcommand(args):
     """Handle the 'server' subcommand - start HTTP server"""
-    from src.mlflow_mltf_gateway.flaskapp.app import create_app
+    from mlflow_mltf_gateway.flaskapp.app import create_app
     import os
 
     app = create_app()
