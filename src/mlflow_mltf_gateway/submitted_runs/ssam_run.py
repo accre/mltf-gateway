@@ -121,6 +121,10 @@ class SSAMSubmittedRun:
 
     def get_run_details(self):
         status = self.get_status()
+
+        if status is None:
+            return {"status": "UNKNOWN", "failure_reason": "Could not retrieve status from SSAM."}
+
         details = {"status": RunStatus.to_string(status)}
         if status == RunStatus.FAILED and self._failure_reason:
             details["failure_reason"] = self._failure_reason
