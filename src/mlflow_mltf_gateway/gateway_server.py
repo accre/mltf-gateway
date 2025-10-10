@@ -144,6 +144,23 @@ class GatewayServer:
         """
         return self.reference_to_run(run_ref).submitted_run.get_status()
 
+    def show(self, run_id: str):
+        """Get the status of a run."""
+        run_ref = RunReference(run_id)
+        return self.get_status(run_ref)
+
+    def show_details(self, run_id: str):
+        """Get details of a run."""
+        run_ref = RunReference(run_id)
+        submitted_run = self.reference_to_run(run_ref).submitted_run
+        if hasattr(submitted_run, 'get_run_details'):
+            return submitted_run.get_run_details()
+        else:
+            # Fallback for other run types
+            status = submitted_run.get_status()
+            from mlflow.entities import RunStatus
+            return {"status": RunStatus.to_string(status)}
+
     def enqueue_run(
         self,
         run_id,

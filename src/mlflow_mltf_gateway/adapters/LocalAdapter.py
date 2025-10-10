@@ -57,6 +57,9 @@ class LocalAdapter(BackendAdapter):
     def get_status(self, run_id):
         return self.gw.get_status(run_id)
 
+    def show(self, run_id):
+        return self.gw.show(run_id)
+
     def enqueue_run(
         self,
         run_id,

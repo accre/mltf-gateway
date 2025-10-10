@@ -54,6 +54,11 @@ class GatewayProjectBackend(AbstractBackend):
         impl = adapter_factory()
         return impl.list(list_all)
 
+    def show(self, run_id: str):
+        """Get the status of a run."""
+        impl = adapter_factory()
+        return impl.show(run_id)
+
     def run(
         self,
         project_uri,
@@ -81,6 +86,7 @@ class GatewayProjectBackend(AbstractBackend):
             with open(config_path, "r") as f:
                 gateway_config = json.load(f)
             backend_config.update(gateway_config)
+
         mlflow_run_obj = get_or_create_run(
             None, project_uri, experiment_id, work_dir, version, entry_point, params
         )

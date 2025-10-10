@@ -46,6 +46,7 @@ class RESTAdapter(BackendAdapter):
     ):
         job_url = urljoin(self.gateway_uri, "api/job")
         files = {"tarball": open(project_tarball, "rb")}
+        print("backend_config:", backend_config)
         data = {
             "run_id": run_id,
             "entry_point": entry_point,
@@ -101,6 +102,22 @@ class RESTAdapter(BackendAdapter):
     def get_status(self, run_id):
         # Prepare the request URL
         url = f"{self.gateway_uri}/status/{run_id}"
+
+        # Prepare headers with authentication
+        headers = {}
+        headers = add_auth_header_to_request(headers)
+
+        # Make the GET request to check status
+        response = requests.get(url, headers=headers)
+
+        if response.status_code != 200:
+            raise RuntimeError(f"Failed to get run status: {response.text}")
+
+        return response.json()
+
+    def show(self, run_id):
+        # Prepare the request URL
+        url = f"{self.gateway_uri}/api/jobs/{run_id}"
 
         # Prepare headers with authentication
         headers = {}

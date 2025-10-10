@@ -71,11 +71,12 @@ def list_jobs():
     return jsonify(jobs), 200
 
 
-@gateway_api_bp.route("/job/<job_id>", methods=["GET"])
+@gateway_api_bp.route("/jobs/<job_id>", methods=["GET"])
 @require_oauth_token
-def status(job_id):
-    status = "running"
-    return jsonify({"job_id": job_id, "status": status}), 200
+def show_job(job_id):
+    gateway_server = current_app.extensions["mltf_gateway"]
+    details = gateway_server.show_details(job_id)
+    return jsonify(details), 200
 
 
 @gateway_api_bp.route("/job/<job_id>", methods=["DELETE"])

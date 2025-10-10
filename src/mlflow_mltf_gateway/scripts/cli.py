@@ -39,6 +39,14 @@ def require_auth(func):
 
 # Subcommand function definitions (grouped together)
 @require_auth
+def handle_show_subcommand(args):
+    """Handle the 'show' subcommand."""
+    backend = GatewayProjectBackend()
+    status = backend.show(args.run_id)
+    print(status)
+
+# Subcommand function definitions (grouped together)
+@require_auth
 def handle_list_subcommand(args):
     """Handle the 'list' subcommand."""
     backend = GatewayProjectBackend()
@@ -191,6 +199,10 @@ def create_parser():
     # Auth-status command
     logout_parser = subparsers.add_parser("auth-status", help="Print auth status")
 
+    # show command
+    show_parser = subparsers.add_parser("show", help="Show the status of a job")
+    show_parser.add_argument("run_id", help="The ID of the run to show")
+
     # Server command
     server_parser = subparsers.add_parser(
         "server", help="Start MLTF Gateway HTTP server"
@@ -207,6 +219,8 @@ def main():
     args = parser.parse_args()
     if args.command == "list":
         handle_list_subcommand(args)
+    if args.command == "show":
+        handle_show_subcommand(args)
     elif args.command == "submit":
         handle_submit_subcommand(args)
     elif args.command == "delete":
