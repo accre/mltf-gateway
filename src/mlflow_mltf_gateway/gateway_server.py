@@ -161,6 +161,17 @@ class GatewayServer:
             from mlflow.entities import RunStatus
             return {"status": RunStatus.to_string(status)}
 
+    def delete(self, run_id: str):
+        """Delete a run."""
+        run_ref = RunReference(run_id)
+        run_to_delete = self.reference_to_run(run_ref)
+
+        run_to_delete.submitted_run.cancel()
+        self.runs = [run for run in self.runs if run.gateway_id != run_id]
+        persist_runs(self.runs)
+
+        return {"run_id": run_id, "message": "Job deleted successfully"}
+
     def enqueue_run(
         self,
         run_id,

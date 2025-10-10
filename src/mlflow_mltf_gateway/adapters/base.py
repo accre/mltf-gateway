@@ -60,3 +60,7 @@ class BackendAdapter:
     @abstractmethod
     def show(self, run_id):
         raise NotImplementedError()
+
+    @abstractmethod
+    def delete(self, run_id):
+        raise NotImplementedError()

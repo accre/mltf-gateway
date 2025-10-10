@@ -60,6 +60,9 @@ class LocalAdapter(BackendAdapter):
     def show(self, run_id):
         return self.gw.show(run_id)
 
+    def delete(self, run_id):
+        return self.gw.delete(run_id)
+
     def enqueue_run(
         self,
         run_id,

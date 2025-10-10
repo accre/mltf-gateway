@@ -88,10 +88,9 @@ def handle_submit_subcommand(args):
 @require_auth
 def handle_delete_subcommand(args):
     """Handle the 'delete' subcommand."""
-    if args._id:
-        print(f"Deleting item with ID: {args._id}")
-    else:
-        print("Please provide an ID to delete.")
+    backend = GatewayProjectBackend()
+    result = backend.delete(args.run_id)
+    print(result)
 
 
 def handle_login_subcommand(args):
@@ -188,7 +187,7 @@ def create_parser():
 
     # Delete command
     delete_parser = subparsers.add_parser("delete", help="Delete an MLTF job")
-    delete_parser.add_argument("--id", required=True, help="ID of the job to delete")
+    delete_parser.add_argument("run_id", help="ID of the job to delete")
 
     # Login command
     login_parser = subparsers.add_parser("login", help="Login to MLTF Gateway")
@@ -219,7 +218,7 @@ def main():
     args = parser.parse_args()
     if args.command == "list":
         handle_list_subcommand(args)
-    if args.command == "show":
+    elif args.command == "show":
         handle_show_subcommand(args)
     elif args.command == "submit":
         handle_submit_subcommand(args)

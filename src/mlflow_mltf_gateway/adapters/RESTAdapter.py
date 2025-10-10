@@ -131,6 +131,18 @@ class RESTAdapter(BackendAdapter):
 
         return response.json()
 
+    def delete(self, run_id):
+        url = f"{self.gateway_uri}/api/jobs/{run_id}"
+
+        headers = {}
+        headers = add_auth_header_to_request(headers)
+        response = requests.delete(url, headers=headers, timeout=30)
+
+        if response.status_code != 200:
+            raise RuntimeError(f"Failed to delete run: {response.text}")
+
+        return response.json()
+
     def get_config(self, run_id):
         # Prepare the request URL
         url = f"{self.gateway_uri}/api/config"

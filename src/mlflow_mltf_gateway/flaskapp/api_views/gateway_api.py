@@ -79,7 +79,9 @@ def show_job(job_id):
     return jsonify(details), 200
 
 
-@gateway_api_bp.route("/job/<job_id>", methods=["DELETE"])
+@gateway_api_bp.route("/jobs/<job_id>", methods=["DELETE"])
 @require_oauth_token
-def result(job_id):
-    return jsonify({"job_id": job_id, "message": "Job cancelled"}), 200
+def delete_job(job_id):
+    gateway_server = current_app.extensions["mltf_gateway"]
+    result = gateway_server.delete(job_id)
+    return jsonify(result), 200

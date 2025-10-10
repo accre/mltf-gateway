@@ -59,6 +59,11 @@ class GatewayProjectBackend(AbstractBackend):
         impl = adapter_factory()
         return impl.show(run_id)
 
+    def delete(self, run_id: str):
+        """Delete a run."""
+        impl = adapter_factory()
+        return impl.delete(run_id)
+
     def run(
         self,
         project_uri,

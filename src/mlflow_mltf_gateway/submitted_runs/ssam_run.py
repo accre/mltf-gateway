@@ -105,15 +105,15 @@ class SSAMSubmittedRun:
             headers = {
                 "Authorization": f"Bearer {self._auth_token}",
             }
-            # The SSAM API doc does not specify a cancel endpoint. Assuming one here.
-            response = requests.delete(
-                f"{self._ssam_url}/api/slurm/{self.job_id}", headers=headers, timeout=30
+            response = requests.post(
+                f"{self._ssam_url}/api/slurm/{self.job_id}/cancel", headers=headers, timeout=30
             )
             response.raise_for_status()
-            self._update_status()
+            _logger.info(f"Successfully sent cancel request for job {self.job_id}")
         except requests.exceptions.RequestException as e:
-            message = f"Error canceling job {self.job_id}: {e}"
-            _logger.error(message)
+            _logger.warning(f"Could not cancel job {self.job_id} via API (it may be already completed): {e}")
+
+        self._update_status()
 
     def get_status(self) -> RunStatus:
         self._update_status()
