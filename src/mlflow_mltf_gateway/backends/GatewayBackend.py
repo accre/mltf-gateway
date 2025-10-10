@@ -54,10 +54,10 @@ class GatewayProjectBackend(AbstractBackend):
         impl = adapter_factory()
         return impl.list(list_all)
 
-    def show(self, run_id: str):
-        """Get the status of a run."""
+    def show_details(self, run_id: str, show_logs: bool):
+        """Get the details of a run."""
         impl = adapter_factory()
-        return impl.show(run_id)
+        return impl.show_details(run_id, show_logs)
 
     def delete(self, run_id: str):
         """Delete a run."""

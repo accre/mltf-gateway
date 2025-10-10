@@ -119,7 +119,7 @@ class SSAMSubmittedRun:
         self._update_status()
         return self._status
 
-    def get_run_details(self):
+    def get_run_details(self, show_logs=False):
         status = self.get_status()
 
         if status is None:
@@ -129,7 +129,8 @@ class SSAMSubmittedRun:
         if status == RunStatus.FAILED and self._failure_reason:
             details["failure_reason"] = self._failure_reason
 
-        details["logs"] = self.get_logs()
+        if show_logs:
+            details["logs"] = self.get_logs()
 
         return details
 

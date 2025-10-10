@@ -42,8 +42,19 @@ def require_auth(func):
 def handle_show_subcommand(args):
     """Handle the 'show' subcommand."""
     backend = GatewayProjectBackend()
-    status = backend.show(args.run_id)
-    print(status)
+    details = backend.show_details(args.run_id, args.show_logs)
+
+    print(f"Status: {details.get('status')}")
+
+    if 'failure_reason' in details:
+        print(f"Failure Reason: {details.get('failure_reason')}")
+
+    if 'logs' in details and details['logs'] is not None:
+        print("--- Logs ---")
+        print(details['logs'])
+    elif args.show_logs:
+        print("--- Logs ---")
+        print("(No logs available)")
 
 # Subcommand function definitions (grouped together)
 @require_auth
@@ -201,6 +212,7 @@ def create_parser():
     # show command
     show_parser = subparsers.add_parser("show", help="Show the status of a job")
     show_parser.add_argument("run_id", help="The ID of the run to show")
+    show_parser.add_argument("--show-logs", action="store_true", help="Show logs of the run")
 
     # Server command
     server_parser = subparsers.add_parser(

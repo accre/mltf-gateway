@@ -150,12 +150,12 @@ class GatewayServer:
         run_ref = RunReference(run_id)
         return self.get_status(run_ref)
 
-    def show_details(self, run_id: str):
+    def show_details(self, run_id: str, show_logs: bool):
         """Get details of a run."""
         run_ref = RunReference(run_id)
         submitted_run = self.reference_to_run(run_ref).submitted_run
         if hasattr(submitted_run, 'get_run_details'):
-            return submitted_run.get_run_details()
+            return submitted_run.get_run_details(show_logs)
         else:
             # Fallback for other run types
             status = submitted_run.get_status()

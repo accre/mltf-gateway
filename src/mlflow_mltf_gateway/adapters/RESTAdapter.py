@@ -115,16 +115,17 @@ class RESTAdapter(BackendAdapter):
 
         return response.json()
 
-    def show(self, run_id):
+    def show_details(self, run_id, show_logs):
         # Prepare the request URL
         url = f"{self.gateway_uri}/api/jobs/{run_id}"
+        params = {"show_logs": show_logs}
 
         # Prepare headers with authentication
         headers = {}
         headers = add_auth_header_to_request(headers)
 
         # Make the GET request to check status
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=headers, params=params)
 
         if response.status_code != 200:
             raise RuntimeError(f"Failed to get run status: {response.text}")

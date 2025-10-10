@@ -75,7 +75,8 @@ def list_jobs():
 @require_oauth_token
 def show_job(job_id):
     gateway_server = current_app.extensions["mltf_gateway"]
-    details = gateway_server.show_details(job_id)
+    show_logs = request.args.get("show_logs", "false").lower() == "true"
+    details = gateway_server.show_details(job_id, show_logs)
     return jsonify(details), 200
 
 
