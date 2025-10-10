@@ -28,6 +28,10 @@ SCOPES = os.environ.get("MLTF_SCOPES", "read write").split()
 # Used to keep user from having to type a password with each CLI call
 if "MLTF_KEYRING_PASSWORD" in os.environ:
     os.environ["KEYRING_CRYPTFILE_PASSWORD"] = os.environ.get("MLTF_KEYRING_PASSWORD")
+# Prevent DBUS backend from being visible since this doesn't seem to work headless
+if "DBUS_SESSION_BUS_ADDRESS" in os.environ:
+    del os.environ["DBUS_SESSION_BUS_ADDRESS"]
+
 import keyring
 
 DID_WARN_KEYRING = False
