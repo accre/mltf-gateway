@@ -51,10 +51,17 @@ def get_stored_credentials() -> Optional[Dict[str, Any]]:
             if not DID_WARN_KEYRING and ((end_time - start_time) > 5.0):
                 DID_WARN_KEYRING = True
                 print(
-                    f"To prevent prompting for a password, you can cache the password with"
-                )
-                print(f"export MLTF_KEYRING_PASSWORD=<your password>")
+                    """
+To prevent prompting for a password, you can cache the password with
 
+  export MLTF_KEYRING_PASSWORD=<your password>
+
+Note: This password should be kept secure since it can unlock the secure
+      token storage. Anyone with the password will be able to access
+      your tokens
+
+"""
+                )
             return {
                 "access_token": access_token,
                 "refresh_token": refresh_token,
