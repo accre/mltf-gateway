@@ -1,6 +1,5 @@
 {
   "url": "https://gateway-dev-mltf.k8s.accre.vanderbilt.edu",
-  "job_name": "mlflow-example-job",
   "nodes": 1,
   "cpus-per-task": 1,
   "mem": "8192",
@@ -8,9 +7,5 @@
   "partition": "batch_gpu",
   "account": "mltf_acc",
   "gres": "gpu:nvidia_geforce_rtx_2080_ti:1",
-  "environment": [
-    "MY_ENV_VAR=value",
-    "TERM=dumb"
-  ],
   "debug": true
 }
