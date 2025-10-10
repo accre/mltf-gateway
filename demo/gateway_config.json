@@ -3,9 +3,9 @@
   "job_name": "mlflow-example-job",
   "nodes": 1,
   "cpus-per-task": 1,
-  "partition": "batch_gpu",
   "mem": "8192",
   "time": 3600,
+  "partition": "batch_gpu",
   "account": "mltf_acc",
   "gres": "gpu:nvidia_geforce_rtx_2080_ti:1",
   "environment": [
