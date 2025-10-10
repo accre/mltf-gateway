@@ -39,6 +39,8 @@ def get_ssam_job_description(backend_config: dict) -> dict:
     :return: A dictionary of Slurm directives.
     """
     new_config = backend_config.copy()
+    if "job_name" not in new_config:
+        new_config["job_name"] = "mltf-train"
     if "url" in new_config:
         del new_config["url"]
     if "auth_token" in new_config:
