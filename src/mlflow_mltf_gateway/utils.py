@@ -40,11 +40,11 @@ def get_ssam_job_description(backend_config: dict) -> dict:
     """
     return {
         "job_name": backend_config.get("job_name", "mlflow-job"),
-        "partition": backend_config.get("partition", "interactive"),
+        "partition": backend_config.get("partition", "batch"),
         "nodes": backend_config.get("nodes", 1),
         "ntasks-per-node": backend_config.get("ntasks-per-node", 1),
         "cpus-per-task": backend_config.get("cpus-per-task", 1),
-        "mem": backend_config.get("mem", "4gb"),
+        "mem": backend_config.get("mem", "4096"),
         "time": backend_config.get("time", "00:20:00"),
         "gpus": backend_config.get("gpus", None),
     }
