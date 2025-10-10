@@ -4,6 +4,8 @@
   "cpus-per-task": 1,
   "mem": "8192",
   "time": 3600,
-  "partition": "batch",
+  "partition": "batch_gpu",
+  "account": "mltf_acc",
+  "gres": "gpu:nvidia_geforce_rtx_2080_ti:1",
   "debug": true
 }

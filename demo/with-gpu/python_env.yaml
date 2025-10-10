@@ -1,0 +1,15 @@
+# Python version required to run the project.
+# This will be installed via pyenv (github.com/pyenv/pyenv)
+python: "3.10.4"
+
+dependencies:
+  - mlflow-skinny
+  # Needed to track gpu/cpu utilization
+  - psutil
+  - pynvml
+
+  # Libraries needed for training
+  - pandas
+  - torch
+  - torchvision
+  - tqdm
