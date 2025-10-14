@@ -35,12 +35,15 @@ dependencies = [
     "flask-sqlalchemy",
     "gunicorn",
     "jinja2",
-    "keyring",
-    "keyrings.cryptfile @ git+https://github.com/frispete/keyrings.cryptfile@3da26edf2f673a3fcd20ca093c7a999b77a23c56 ; sys_platform == 'linux'",
+    "keyring>=20.0.0",
     "mlflow-skinny",
     "python-dotenv",
     "requests",
     "tbump",
+    # Needed for the keyrings.cryptfile package
+    "argon2_cffi",
+    "jaraco.classes",
+    "pycryptodome",
   ]
 
 [project.urls]
@@ -50,6 +53,12 @@ Source = "https://github.com/PerilousApricot/mlflow-mltf-gateway"
 
 [project.entry-points."mlflow.project_backend"]
 gateway = "mlflow_mltf_gateway.gateway_client:gateway_backend_builder"
+
+[project.entry-points."keyring.backends"]
+cryptfile = "mlflow_mltf_gateway.vendor.keyrings.cryptfile.cryptfile"
+
+[project.entry-points."mlflow.console_scripts"]
+cryptfile-convert = "mlflow_mltf_gateway.vendor.keyrings.cryptfile.convert:main"
 
 [project.scripts]
 mltf = "mlflow_mltf_gateway.scripts:main"
@@ -64,8 +73,12 @@ allow-direct-references = true
 extra-dependencies = [
   "mypy>=1.0.0",
 ]
+
 [tool.hatch.envs.types.scripts]
 check = "mypy --install-types --non-interactive {args:src/mlflow_mltf_gateway tests}"
+
+[tool.black]
+extend_exclude = "src/mlflow_mltf_gateway/vendor"
 
 [tool.coverage.run]
 source_pkgs = ["mlflow_mltf_gateway", "tests"]
