@@ -47,9 +47,9 @@ dependencies = [
   ]
 
 [project.urls]
-Documentation = "https://github.com/PerilousApricot/mlflow-mltf-gateway#readme"
-Issues = "https://github.com/PerliousApricot/mlflow-mltf-gateway/issues"
-Source = "https://github.com/PerilousApricot/mlflow-mltf-gateway"
+Documentation = "https://github.com/accre/mltf-gateway#readme"
+Issues = "https://github.com/accre/mltf-gateway/issues"
+Source = "https://github.com/accre/mltf-gateway"
 
 [project.entry-points."mlflow.project_backend"]
 gateway = "mlflow_mltf_gateway.gateway_client:gateway_backend_builder"
