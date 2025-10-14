@@ -88,6 +88,9 @@ omit = [
   "src/mlflow_mltf_gateway/__about__.py",
 ]
 
+[tool.hatch.build.targets.wheel]
+packages = ["src/mlflow_mltf_gateway"]
+
 [tool.coverage.paths]
 mlflow_mltf_gateway = ["src/mlflow_mltf_gateway", "*/mlflow-mltf-gateway/src/mlflow_mltf_gateway"]
 tests = ["tests", "*/mlflow-mltf-gateway/tests"]
