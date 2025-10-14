@@ -1,6 +1,7 @@
 import json
 import os
 import os.path
+import sys
 import tarfile
 import tempfile
 import urllib.parse
@@ -55,7 +56,11 @@ def produce_tarball(file_catalog):
                         of (size, modify time, absolute path to file on host)
     :return: Path to tarball, it is caller's responsibility to clean up this file after use
     """
-    with tempfile.NamedTemporaryFile(delete=False, delete_on_close=False) as nf:
+    if sys.version_info[1] >= 12:
+        delete_arg = {"delete_on_close": False}
+    else:
+        delete_arg = {}
+    with tempfile.NamedTemporaryFile(delete=False, **delete_arg) as nf:
         with tarfile.TarFile(fileobj=nf, mode="w") as tf:
             # Put some metadata at the front of the tarball
             with tempfile.NamedTemporaryFile(buffering=0) as meta:
