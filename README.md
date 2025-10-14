@@ -16,8 +16,7 @@ source venv/bin/activate
 
 # Once within the virtual environment, install the client
 # This only needs to be done once
-git clone https://github.com/accre/mltf-gateway.git
-pip install -e mltf-gateway
+pip install mltf-gateway
 ```
 
 After installing, configure the client with
