@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "mlflow-mltf-gateway"
+name = "mltf-gateway"
 dynamic = ["version"]
 description = ''
 readme = "README.md"
