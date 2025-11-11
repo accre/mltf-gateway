@@ -1,4 +1,7 @@
 import os
+import jwt
+import requests
+import logging
 from flask import Flask, render_template, g, request, session
 from dotenv import load_dotenv
 from .extensions import db, login_manager
@@ -10,6 +13,8 @@ from .api_views.gateway_api import gateway_api_bp
 from .models.user import User
 
 from ..gateway_server import GatewayServer
+
+logger = logging.getLogger(__name__)
 
 
 def init_routes(app):
@@ -46,7 +51,11 @@ def create_app():
     app.register_blueprint(token_bp, url_prefix="/token")
     app.register_blueprint(token_api_bp, url_prefix="/api/token")
     app.register_blueprint(gateway_api_bp, url_prefix="/api")
-    load_dotenv()
+    load_dotenv(
+        dotenv_path=os.path.join(os.getcwd(), ".env"), override=True, verbose=True
+    )
+    print("DOTENV LOADING")
+    print(os.environ.get("SLURM_TOKEN", None))
 
     # use env variables or defaults
     app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "supersecretkey")

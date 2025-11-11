@@ -21,7 +21,6 @@ from ..adapters.base import BackendAdapter
 from ..project_packer import prepare_tarball, produce_tarball
 from ..submitted_runs.client_run import ClientSideSubmittedRun
 
-_configure_mlflow_loggers(root_module_name=__name__)
 _logger = logging.getLogger(__name__)
 
 
@@ -128,7 +127,7 @@ class GatewayProjectBackend(AbstractBackend):
             )
             _logger.info(f"Execution enqueued: {ret}")
             print(
-                f"Find your MLFlow run at {tracking_uri}/#/experiments/{experiment_id}/runs/{mlflow_run}"
+                f"Find your MLFlow run at:\n\n  {tracking_uri}/#/experiments/{experiment_id}/runs/{mlflow_run}\n\n"
             )
             return ret
         finally:

@@ -10,7 +10,6 @@ import time
 import webbrowser
 from typing import Optional, Dict, Any
 
-
 import requests
 
 # Configuration - These should be configurable via environment variables or config file
@@ -92,10 +91,10 @@ def store_credentials(access_token: str, refresh_token: str, expires_at: int):
 def clear_stored_credentials():
     """Clear stored credentials from keyring"""
     try:
-        keyring.delete_password("mltf_gateway", "access_token")
-        keyring.delete_password("mltf_gateway", "refresh_token")
-        keyring.delete_password("mltf_gateway", "expires_at")
-        print("Stored credentials cleared")
+        passwords = ["access_token", "refresh_token", "expires_at"]
+        for p in passwords:
+            if keyring.get_password("mltf_gateway", p):
+                keyring.delete_password("mltf_gateway", p)
     except Exception as e:
         print(f"Error clearing stored credentials: {e}")
 
@@ -298,4 +297,3 @@ def is_authenticated() -> bool:
 def logout():
     """Logout by clearing stored credentials"""
     clear_stored_credentials()
-    print("Logged out successfully")

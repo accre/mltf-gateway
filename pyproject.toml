@@ -88,6 +88,9 @@ omit = [
   "src/mlflow_mltf_gateway/__about__.py",
 ]
 
+[tool.hatch.build.targets.sdist]
+only-include = ["src/", "tests/"]
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/mlflow_mltf_gateway"]
 

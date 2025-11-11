@@ -172,6 +172,7 @@ def handle_server_subcommand(args):
 
 def create_parser():
     parser = argparse.ArgumentParser(description="CLI tool for managing MLTF jobs")
+    parser.add_argument("--debug", dest="debug", default=False)
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
     # List command
@@ -223,6 +224,8 @@ def create_parser():
 def main():
     parser = create_parser()
     args = parser.parse_args()
+    loglevel = logging.DEBUG if args.debug else logging.CRITICAL
+    logging.basicConfig(format="%(levelname)s:%(message)s", level=loglevel)
     if args.command == "list":
         handle_list_subcommand(args)
     elif args.command == "show":
