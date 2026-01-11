@@ -2,17 +2,13 @@
 # MLTF CLI - an actual script people can run
 #
 
-
 import argparse
 import logging
-
-import jwt
 import os
 import os.path
 import sys
 from datetime import datetime, timezone
-
-log = logging.getLogger("mltf-cli")
+import jwt
 
 # Import OAuth2 client
 from mlflow_mltf_gateway.oauth_client import (
@@ -23,7 +19,9 @@ from mlflow_mltf_gateway.oauth_client import (
     token_expired,
 )
 from mlflow_mltf_gateway.backends.GatewayBackend import GatewayProjectBackend
+from mlflow_mltf_gateway.utils import get_tracking_uri
 
+log = logging.getLogger("mltf-cli")
 
 # Decorator for authentication checks
 def require_auth(func):
@@ -82,13 +80,17 @@ def handle_submit_subcommand(args):
     """Handle the 'submit' subcommand."""
 
     backend = GatewayProjectBackend()
+    tracking_uri = get_tracking_uri()
+    if os.environ.get("MLFLOW_TRACKING_URI"):
+        tracking_uri = os.environ.get("MLFLOW_TRACKING_URI")
+        
     ret = backend.run(
         project_uri=args.dir,
         entry_point="main",
         params={},
         version=None,
         backend_config={},
-        tracking_uri="https://mlflow-test.mltf.k8s.accre.vanderbilt.edu",
+        tracking_uri=tracking_uri,
         experiment_id="0",
     )
     print(f"Submitted project to MLTF: {ret['gateway_id']}")
@@ -100,6 +102,49 @@ def handle_delete_subcommand(args):
     backend = GatewayProjectBackend()
     result = backend.delete(args.run_id)
     print(result)
+
+
+@require_auth
+def handle_artifacts_subcommand(args):
+    """Handle the 'artifacts' subcommand."""
+    from mlflow.tracking import MlflowClient
+    from mlflow_mltf_gateway.oauth_client import get_access_token
+
+    backend = GatewayProjectBackend()
+    # List all runs to find the mapping from gateway_id to run_id
+    runs = backend.list()
+    target_run_id = None
+    for run in runs:
+        if run["gateway_id"] == args.run_id:
+            target_run_id = run["run_id"]
+            break
+
+    if not target_run_id:
+        print(f"Job with ID {args.run_id} not found.")
+        return
+
+    tracking_uri = get_tracking_uri()
+    if os.environ.get("MLFLOW_TRACKING_URI"):
+        tracking_uri = os.environ.get("MLFLOW_TRACKING_URI")
+
+    # Ensure tracking token is set for authentication with the tracking server
+    creds = get_access_token()
+    os.environ["MLFLOW_TRACKING_TOKEN"] = creds["access_token"]
+
+    client = MlflowClient(tracking_uri=tracking_uri)
+    try:
+        artifacts = client.list_artifacts(target_run_id)
+        if artifacts:
+            print(f"Artifacts for run {args.run_id} (MLflow ID: {target_run_id}):")
+            for artifact in artifacts:
+                # Construct the download URL as requested
+                base_url = tracking_uri.rstrip("/")
+                download_url = f"{base_url}/get-artifact?path={artifact.path}&run_uuid={target_run_id}"
+                print(f"  {artifact.path} (Download URL: {download_url})")
+        else:
+            print(f"No artifacts found for run {args.run_id}.")
+    except Exception as e:
+        print(f"Error retrieving artifacts: {e}")
 
 
 def handle_login_subcommand(args):
@@ -194,6 +239,12 @@ def create_parser():
     delete_parser = subparsers.add_parser("delete", help="Delete an MLTF job")
     delete_parser.add_argument("run_id", help="ID of the job to delete")
 
+    # Artifacts command
+    artifacts_parser = subparsers.add_parser(
+        "artifacts", help="Show artifacts for a given run"
+    )
+    artifacts_parser.add_argument("run_id", help="ID of the run to show artifacts for")
+
     # Login command
     login_parser = subparsers.add_parser("login", help="Login to MLTF Gateway")
 
@@ -234,6 +285,8 @@ def main():
         handle_submit_subcommand(args)
     elif args.command == "delete":
         handle_delete_subcommand(args)
+    elif args.command == "artifacts":
+        handle_artifacts_subcommand(args)
     elif args.command == "login":
         handle_login_subcommand(args)
     elif args.command == "logout":

@@ -6,22 +6,21 @@ import shlex
 import tempfile
 import uuid
 
-log = logging.getLogger(__name__)
-
-from mlflow_mltf_gateway.submitted_runs.server_run import (
-    ServerSideSubmittedRunDescription,
-)
-from .data_classes import (
+from mlflow_mltf_gateway.executors.base import get_script, ExecutorBase
+from mlflow_mltf_gateway.executors.local_executor import LocalExecutor
+from mlflow_mltf_gateway.executors.slurm_executor import SLURMExecutor
+from mlflow_mltf_gateway.executors.ssam_executor import SSAMExecutor
+from mlflow_mltf_gateway.submitted_runs.server_run import ServerSideSubmittedRunDescription
+from mlflow_mltf_gateway.data_classes import (
     MovableFileReference,
     RunReference,
     GatewayRunDescription,
 )
-from .executors.base import get_script, ExecutorBase
-from .executors.local_executor import LocalExecutor
-from .executors.slurm_executor import SLURMExecutor
-from .executors.ssam_executor import SSAMExecutor
+from mlflow_mltf_gateway.utils import get_tracking_uri
+
 
 DEBUG = False
+log = logging.getLogger(__name__)
 
 # Very simple persistence for now, can be shoved into SQLite or similar later
 RUN_DATABASE = "gateway_run_db.pkl"
@@ -86,8 +85,13 @@ class GatewayServer:
         self.inside_script = inside_script or "inside.sh"
         self.outside_script = outside_script or "outside.sh"
         self.tracking_server = (
-            tracking_server or "https://mlflow-test.mltf.k8s.accre.vanderbilt.edu"
+            tracking_server or get_tracking_uri()
         )
+        self.mlflow_s3_endpoint_url = os.environ.get("MLFLOW_S3_ENDPOINT_URL")
+        self.aws_access_key_id = os.environ.get("AWS_ACCESS_KEY_ID")
+        self.aws_secret_access_key = os.environ.get("AWS_SECRET_ACCESS_KEY")
+        self.mltf_s3_bucket = os.environ.get("MLTF_S3_BUCKET")
+
         # List of runs we know about
         # Should be persisted to a database
         self.runs = unpersist_runs()
@@ -261,6 +265,24 @@ class GatewayServer:
         # (e.g.) the command line args
         env_vars = [f"export MLFLOW_TRACKING_URI={shlex.quote(self.tracking_server)}"]
         env_vars.append(f"export MLFLOW_ENABLE_SYSTEM_METRICS_LOGGING=true")
+
+        if self.mlflow_s3_endpoint_url:
+            env_vars.append(
+                f"export MLFLOW_S3_ENDPOINT_URL={shlex.quote(self.mlflow_s3_endpoint_url)}"
+            )
+        if self.aws_access_key_id:
+            env_vars.append(
+                f"export AWS_ACCESS_KEY_ID={shlex.quote(self.aws_access_key_id)}"
+            )
+        if self.aws_secret_access_key:
+            env_vars.append(
+                f"export AWS_SECRET_ACCESS_KEY={shlex.quote(self.aws_secret_access_key)}"
+            )
+        if self.mltf_s3_bucket and run_desc.run_id and run_desc.experiment_id:
+            # Assuming standard s3://bucket/path structure
+            artifact_uri = f"s3://{self.mltf_s3_bucket}/{run_desc.experiment_id}/{run_desc.run_id}/artifacts"
+            env_vars.append(f"export MLFLOW_ARTIFACT_URI={shlex.quote(artifact_uri)}")
+
         if run_desc.run_id not in ("", "UNKNOWN"):
             env_vars.append(f"export MLFLOW_RUN_ID={shlex.quote(run_desc.run_id)}")
         if runtime_token:

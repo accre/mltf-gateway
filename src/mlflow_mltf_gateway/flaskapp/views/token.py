@@ -21,7 +21,6 @@ def get_current_tokens():
     """
     if not current_user.is_authenticated:
         return []
-    print(dir(current_user))
     return db.session.scalars(
         db.select(Token).where(Token.user_id == current_user.get_id())
     ).all()

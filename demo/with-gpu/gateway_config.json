@@ -6,6 +6,6 @@
   "time": 3600,
   "partition": "batch_gpu",
   "account": "mltf_acc",
-  "gres": "gpu:nvidia_geforce_rtx_2080_ti:1",
+  "gres": "gpu:nvidia_rtx_a6000:1",
   "debug": true
 }
