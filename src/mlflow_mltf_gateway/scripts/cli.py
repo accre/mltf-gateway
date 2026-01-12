@@ -23,6 +23,7 @@ from mlflow_mltf_gateway.utils import get_tracking_uri
 
 log = logging.getLogger("mltf-cli")
 
+
 # Decorator for authentication checks
 def require_auth(func):
     """Decorator to require authentication before executing a command"""
@@ -83,7 +84,7 @@ def handle_submit_subcommand(args):
     tracking_uri = get_tracking_uri()
     if os.environ.get("MLFLOW_TRACKING_URI"):
         tracking_uri = os.environ.get("MLFLOW_TRACKING_URI")
-        
+
     ret = backend.run(
         project_uri=args.dir,
         entry_point="main",

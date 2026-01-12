@@ -1,11 +1,13 @@
 """
 Utility functions for MLTF backend.
 """
+
 import os
 import shlex
 from typing import Tuple, List
 
 DEFAULT_TRACKING_SERVER = "https://mlflow-test.mltf.k8s.accre.vanderbilt.edu"
+
 
 def get_tracking_uri() -> str:
     """
@@ -16,6 +18,7 @@ def get_tracking_uri() -> str:
     if os.environ.get("MLFLOW_TRACKING_URI"):
         tracking_uri = os.environ.get("MLFLOW_TRACKING_URI")
     return tracking_uri
+
 
 def try_split_cmd(cmd: str) -> Tuple[str, List[str]]:
     """
