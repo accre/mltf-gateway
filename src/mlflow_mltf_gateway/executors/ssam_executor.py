@@ -28,7 +28,6 @@ def is_jwt_expired(token):
     try:
         decoded = jwt.decode(token, options={"verify_signature": False})
         exp_ts = int(decoded.get("exp", 0))
-        print(f"verified {exp_ts}")
         return exp_ts - int(time.time()) <= 60
     except jwt.InvalidTokenError:
         return True
@@ -176,9 +175,7 @@ class SSAMExecutor(ExecutorBase):
         client_refresh_vars = ClientRefreshToken.desired_args()
         client_refresh_vars_count = 0
         for var in client_refresh_vars:
-            print(f"getting vars {var.upper()}")
             if os.environ.get(var.upper(), None):
-                print("found var")
                 client_refresh_vars_count += 1
 
         if client_refresh_vars_count:
@@ -212,7 +209,6 @@ class SSAMExecutor(ExecutorBase):
         """
         headers = {"Authorization": f"Bearer {auth_token}"}
         payload = {"slurm_token": slurm_token, "token_name": "asd"}
-        print(f"headers {headers}\npayload {payload}")
         response = requests.post(
             f"{ssam_url}/api/cluster_slurm_token",
             json=payload,

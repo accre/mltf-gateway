@@ -2,9 +2,11 @@ import logging
 import shutil
 import tempfile
 import time
+import os
 
 from mlflow_mltf_gateway.adapters.base import BackendAdapter
 from mlflow_mltf_gateway.oauth_client import get_access_token
+from mlflow_mltf_gateway.utils import get_tracking_uri
 
 _logger = logging.getLogger(__name__)
 
@@ -101,4 +103,5 @@ class LocalAdapter(BackendAdapter):
         return ret
 
     def get_config(self):
-        return {"tracking_uri": "https://mlflow-test.mltf.k8s.accre.vanderbilt.edu"}
+        tracking_uri = get_tracking_uri()
+        return {"tracking_uri": tracking_uri}

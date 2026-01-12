@@ -100,6 +100,11 @@ train(my_net, fmnist_train_loader, loss_function, optimizer, num_epochs)
 mlflow.log_params({"epochs": num_epochs, "lr": lr})
 mlflow.pytorch.log_model(my_net, "model")
 
+# Save the model state dict to a file and log it as a raw artifact
+model_path = "model.pth"
+torch.save(my_net.state_dict(), model_path)
+mlflow.log_artifact(model_path)
+
 
 correct = 0
 total = 0

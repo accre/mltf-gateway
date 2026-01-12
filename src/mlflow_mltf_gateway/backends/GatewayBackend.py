@@ -11,15 +11,14 @@ from mlflow.projects.utils import (
     fetch_and_validate_project,
     get_or_create_run,
 )
-from mlflow.utils.logging_utils import _configure_mlflow_loggers
 from mlflow.utils.mlflow_tags import MLFLOW_USER
-
 from mlflow_mltf_gateway.oauth_client import get_access_token
-from ..adapters.LocalAdapter import LocalAdapter
-from ..adapters.RESTAdapter import RESTAdapter
-from ..adapters.base import BackendAdapter
-from ..project_packer import prepare_tarball, produce_tarball
-from ..submitted_runs.client_run import ClientSideSubmittedRun
+from mlflow_mltf_gateway.adapters.LocalAdapter import LocalAdapter
+from mlflow_mltf_gateway.adapters.RESTAdapter import RESTAdapter
+from mlflow_mltf_gateway.adapters.base import BackendAdapter
+from mlflow_mltf_gateway.project_packer import prepare_tarball, produce_tarball
+from mlflow_mltf_gateway.submitted_runs.client_run import ClientSideSubmittedRun
+from mlflow_mltf_gateway.utils import get_tracking_uri
 
 _logger = logging.getLogger(__name__)
 
@@ -76,10 +75,22 @@ class GatewayProjectBackend(AbstractBackend):
         if tracking_uri.startswith("file://"):
             _logger.warning("""Tracking URI was not set""")
             # FIXME We should eb able to get this from the server
-            tracking_uri = "https://mlflow-test.mltf.k8s.accre.vanderbilt.edu"
+            tracking_uri = get_tracking_uri()
+
         mlflow.set_tracking_uri(tracking_uri)
         creds = get_access_token()
         os.environ["MLFLOW_TRACKING_TOKEN"] = creds["access_token"]
+        decoded = jwt.decode(creds["access_token"], options={"verify_signature": False})
+
+        # Determine experiment based on username
+        try:
+            suffix = decoded["preferred_username"].split("@")[0]
+        except (KeyError, SyntaxError, IndexError):
+            suffix = "unknown_user"
+
+        experiment_name = f"default_{suffix}"
+        experiment = mlflow.set_experiment(experiment_name)
+        experiment_id = experiment.experiment_id
 
         impl = adapter_factory()
 
@@ -94,8 +105,6 @@ class GatewayProjectBackend(AbstractBackend):
         mlflow_run_obj = get_or_create_run(
             None, project_uri, experiment_id, work_dir, version, entry_point, params
         )
-
-        decoded = jwt.decode(creds["access_token"], options={"verify_signature": False})
 
         tracking.MlflowClient().set_tag(
             mlflow_run_obj.info.run_id, MLFLOW_USER, decoded["preferred_username"]
