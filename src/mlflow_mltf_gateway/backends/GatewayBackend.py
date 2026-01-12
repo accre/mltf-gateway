@@ -83,7 +83,12 @@ class GatewayProjectBackend(AbstractBackend):
         decoded = jwt.decode(creds["access_token"], options={"verify_signature": False})
 
         # Determine experiment based on username
-        experiment_name = f"Experiment_{decoded['preferred_username']}"
+        try:
+            suffix = decoded["preferred_username"].split("@")[0]
+        except (KeyError, SyntaxError, IndexError):
+            suffix = "unknown_user"
+
+        experiment_name = f"default_{suffix}"
         experiment = mlflow.set_experiment(experiment_name)
         experiment_id = experiment.experiment_id
 
