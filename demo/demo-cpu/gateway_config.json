@@ -1,5 +1,4 @@
 {
-  "url": "https://gateway-dev-mltf.k8s.accre.vanderbilt.edu",
   "nodes": 1,
   "cpus-per-task": 1,
   "mem": "8192",

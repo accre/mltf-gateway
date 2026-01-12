@@ -10,7 +10,9 @@ from mlflow_mltf_gateway.executors.base import get_script, ExecutorBase
 from mlflow_mltf_gateway.executors.local_executor import LocalExecutor
 from mlflow_mltf_gateway.executors.slurm_executor import SLURMExecutor
 from mlflow_mltf_gateway.executors.ssam_executor import SSAMExecutor
-from mlflow_mltf_gateway.submitted_runs.server_run import ServerSideSubmittedRunDescription
+from mlflow_mltf_gateway.submitted_runs.server_run import (
+    ServerSideSubmittedRunDescription,
+)
 from mlflow_mltf_gateway.data_classes import (
     MovableFileReference,
     RunReference,
@@ -84,9 +86,7 @@ class GatewayServer:
                 raise ValueError(f"Unknown executor: {executor_name}")
         self.inside_script = inside_script or "inside.sh"
         self.outside_script = outside_script or "outside.sh"
-        self.tracking_server = (
-            tracking_server or get_tracking_uri()
-        )
+        self.tracking_server = tracking_server or get_tracking_uri()
         self.mlflow_s3_endpoint_url = os.environ.get("MLFLOW_S3_ENDPOINT_URL")
         self.aws_access_key_id = os.environ.get("AWS_ACCESS_KEY_ID")
         self.aws_secret_access_key = os.environ.get("AWS_SECRET_ACCESS_KEY")
