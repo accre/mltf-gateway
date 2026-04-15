@@ -37,8 +37,10 @@ dependencies = [
     "jinja2",
     "keyring>=20.0.0",
     "mlflow-skinny",
+    "pytest",
     "python-dotenv",
     "requests",
+    "requests-mock",
     "tbump",
     # Needed for the keyrings.cryptfile package
     "argon2_cffi",
@@ -52,19 +54,19 @@ Issues = "https://github.com/accre/mltf-gateway/issues"
 Source = "https://github.com/accre/mltf-gateway"
 
 [project.entry-points."mlflow.project_backend"]
-gateway = "mlflow_mltf_gateway.gateway_client:gateway_backend_builder"
+gateway = "mltf_gateway.gateway_client:gateway_backend_builder"
 
 [project.entry-points."keyring.backends"]
-cryptfile = "mlflow_mltf_gateway.vendor.keyrings.cryptfile.cryptfile"
+cryptfile = "mltf_gateway.vendor.keyrings.cryptfile.cryptfile"
 
 [project.entry-points."mlflow.console_scripts"]
-cryptfile-convert = "mlflow_mltf_gateway.vendor.keyrings.cryptfile.convert:main"
+cryptfile-convert = "mltf_gateway.vendor.keyrings.cryptfile.convert:main"
 
 [project.scripts]
-mltf = "mlflow_mltf_gateway.scripts:main"
+mltf = "mltf_gateway.scripts:main"
 
 [tool.hatch.version]
-path = "src/mlflow_mltf_gateway/__about__.py"
+path = "src/mltf_gateway/__about__.py"
 
 [tool.hatch.metadata]
 allow-direct-references = true
@@ -75,27 +77,27 @@ extra-dependencies = [
 ]
 
 [tool.hatch.envs.types.scripts]
-check = "mypy --install-types --non-interactive {args:src/mlflow_mltf_gateway tests}"
+check = "mypy --install-types --non-interactive {args:src/mltf_gateway tests}"
 
 [tool.black]
-extend_exclude = "src/mlflow_mltf_gateway/vendor"
+extend_exclude = "src/mltf_gateway/vendor"
 
 [tool.coverage.run]
-source_pkgs = ["mlflow_mltf_gateway", "tests"]
+source_pkgs = ["mltf_gateway", "tests"]
 branch = true
 parallel = true
 omit = [
-  "src/mlflow_mltf_gateway/__about__.py",
+  "src/mltf_gateway/__about__.py",
 ]
 
 [tool.hatch.build.targets.sdist]
 only-include = ["src/", "tests/"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/mlflow_mltf_gateway"]
+packages = ["src/mltf_gateway"]
 
 [tool.coverage.paths]
-mlflow_mltf_gateway = ["src/mlflow_mltf_gateway", "*/mlflow-mltf-gateway/src/mlflow_mltf_gateway"]
+mltf_gateway = ["src/mltf_gateway", "*/mlflow-mltf-gateway/src/mltf_gateway"]
 tests = ["tests", "*/mlflow-mltf-gateway/tests"]
 
 [tool.coverage.report]

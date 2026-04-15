@@ -5,19 +5,20 @@ import unittest
 
 from mlflow.entities import RunStatus
 
-from mlflow_mltf_gateway.gateway_server import (
+from mltf_gateway.gateway_server import (
     GatewayRunDescription,
     GatewayServer,
     get_script,
     MovableFileReference,
     SLURMExecutor,
 )
-from mlflow_mltf_gateway.submitted_runs.server_run import (
+from mltf_gateway.submitted_runs.server_run import (
     ServerSideSubmittedRunDescription,
 )
+from tests.common_test_base import MockedGatewayTestBase
 
 
-class GatewayServerTest(unittest.TestCase):
+class GatewayServerTest(MockedGatewayTestBase):
     def test_getscript(self):
         pass_path = get_script("inside.sh")
         self.assertEqual(os.path.exists(pass_path), True)
@@ -41,8 +42,8 @@ class GatewayServerTest(unittest.TestCase):
             with open(filename, "w") as f:
                 f.write("beep beep")
 
-            run_desc = GatewayRunDescription("", filename, "", {}, {}, "", "", "")
-            srv = GatewayServer()
+            run_desc = GatewayRunDescription("", filename, "", {}, {}, self.tracking_uri, "", "")
+            srv = GatewayServer(tracking_server=self.tracking_uri)
             ret = srv.get_execution_snippet(run_desc)
             curr = ret["files"]["outside.sh"]
             assert os.path.exists(curr.target)
@@ -55,28 +56,29 @@ class GatewayServerTest(unittest.TestCase):
             with open(filename, "w") as f:
                 f.write("beep beep")
 
-            run_desc = GatewayRunDescription("", filename, "", {}, {}, "", "", "")
-            srv = GatewayServer()
+            run_desc = GatewayRunDescription("", filename, "", {}, {}, self.tracking_uri, "", "")
+            srv = GatewayServer(tracking_server=self.tracking_uri)
             ctx = srv.get_execution_snippet(run_desc)
 
             executor = SLURMExecutor()
             print(executor.generate_slurm_template(ctx, run_desc))
 
     def test_execute_hello(self):
-        srv = GatewayServer(inside_script="test/inside-noop.sh")
+        srv = GatewayServer(inside_script="test/inside-noop.sh",tracking_server=self.tracking_uri)
         tarball = get_script("mltf-hello-world.tar.gz")
-        ret = srv.enqueue_run("", tarball, "", {}, {}, "", "", "", "FAKE-TOKEN")
+        ret = srv.enqueue_run("", tarball, "", {}, {}, self.tracking_uri, "", "", "FAKE-TOKEN")
         self.assertIsInstance(ret, ServerSideSubmittedRunDescription)
         ret.submitted_run.wait()
-        self.assertEqual(
-            ret.submitted_run.get_status(), RunStatus.to_string(RunStatus.FINISHED)
-        )
+        if not ret.submitted_run.get_status() == RunStatus.to_string(RunStatus.FINISHED):
+            mylog, _ = ret.submitted_run.command_proc.communicate()
+            mylog = mylog.decode("utf-8")
+            self.fail("bad return")
 
     def test_client_hello(self):
-        srv = GatewayServer(inside_script="test/inside-noop.sh")
+        srv = GatewayServer(inside_script="test/inside-noop.sh",tracking_server=self.tracking_uri)
         tarball = get_script("mltf-hello-world.tar.gz")
         client_id = srv.enqueue_run_client(
-            "", tarball, "", {}, {}, "", "", "", "FAKE-TOKEN"
+            "", tarball, "", {}, {}, self.tracking_uri, "", "", "FAKE-TOKEN"
         )
         server_id = srv.reference_to_run(client_id)
         self.assertIsInstance(server_id, ServerSideSubmittedRunDescription)
@@ -89,10 +91,10 @@ class GatewayServerTest(unittest.TestCase):
     @unittest.skipUnless(shutil.which("sbatch"), "Requires SLURM")
     def test_slurm_template(self):
         srv = GatewayServer(
-            executor=SLURMExecutor(), inside_script="test/inside-noop.sh"
+            executor=SLURMExecutor(), inside_script="test/inside-noop.sh",tracking_server=self.tracking_uri
         )
         tarball = get_script("mltf-hello-world.tar.gz")
-        ret = srv.enqueue_run("", tarball, "", {}, {}, "", "", "", "FAKE-TOKEN")
+        ret = srv.enqueue_run("", tarball, "", {}, {}, self.tracking_uri, "", "", "FAKE-TOKEN")
         # self.assertIsInstance(ret, SubmittedRun)
         ret.wait()
         self.assertEqual(ret.get_status(), RunStatus.to_string(RunStatus.FINISHED))

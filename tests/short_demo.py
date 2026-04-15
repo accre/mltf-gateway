@@ -6,7 +6,7 @@ import requests
 import functools
 import tarfile
 import time
-import mlflow_mltf_gateway.project_packer as project_packer
+import mltf_gateway.project_packer as project_packer
 
 URL = "https://gateway-dev.mltf.k8s.accre.vanderbilt.edu"
 

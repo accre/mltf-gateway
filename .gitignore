@@ -217,3 +217,8 @@ __marimo__/
 
 # dotenv environment variable files
 mlruns
+
+# mltf-output directories (temporary output directories)
+mltf-output-*/
+**/mltf-output-*/
+

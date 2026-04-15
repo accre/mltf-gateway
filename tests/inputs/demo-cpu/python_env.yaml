@@ -1,0 +1,6 @@
+# Python version required to run the project.
+python: "3.10.4"
+dependencies:
+  - mlflow-skinny
+  - numpy==1.26.0
+  - psutil
