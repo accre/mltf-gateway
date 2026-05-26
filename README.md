@@ -21,7 +21,7 @@ pip install mltf-gateway
 
 After installing, configure the client with
 ```bash
-export MLTF_GATEWAY_URI=https://gateway-dev.mltf.k8s.accre.vanderbilt.edu
+export MLTF_GATEWAY_URI=https://gw.mltf.vu
 mltf login
 ```
 This will prompt you to visit a webpage, login using either CERN or Vanderbilt credentials, and copy a code from your
