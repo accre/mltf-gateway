@@ -4,6 +4,11 @@ on:
   push:
     branches:
       - 'main'
+
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   commit-docker-latest:
     runs-on: 
@@ -33,3 +38,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_USER: ${{ github.repository_owner }}
+
+        permissions:
+          contents: read
+          packages: write
