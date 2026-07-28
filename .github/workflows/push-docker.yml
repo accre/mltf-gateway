@@ -28,6 +28,6 @@ jobs:
         run: |
           ls -lah
           pwd
-          env
+          echo $GITHUB_TOKEN
           ./ci/mltf-container/build.sh -c -t ghcr.io/accre/mltf-gateway:latest
           docker push ghcr.io/accre/mltf-gateway:latest
