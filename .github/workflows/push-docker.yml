@@ -10,7 +10,7 @@ permissions:
   packages: write
 
 jobs:
-  release-build:
+  commit-docker-latest:
     runs-on: 
       - ubuntu-latest
 
@@ -18,9 +18,22 @@ jobs:
       - name: Checkout commit
         uses: actions/checkout@v4
 
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
       - name: Build release distributions
         run: |
           ls -lah
           pwd
-          ./ci/mltf-container/build.sh -c -t ghcr.io/accre/mltf-gateway-latest
+          ./ci/mltf-container/build.sh -p -t ghcr.io/accre/mltf-gateway-latest
           docker push ghcr.io/accre/mltf-gateway-latest
