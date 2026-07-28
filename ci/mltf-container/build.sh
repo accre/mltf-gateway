@@ -20,7 +20,7 @@ CLEAN=""
 
 PROD_MULTIARCH="--platform amd64,arm64"
 PROD_CLEAN="--pull --no-cache"
-while getopts 'acpt:h' opt; do
+while getopts 'pact:h' opt; do
   case "$opt" in
     a)
       MULTIARCH="${PROD_MULTIARCH}"
