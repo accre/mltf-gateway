@@ -27,7 +27,7 @@ jobs:
       - name: Build release distributions
         run: |
           ls -lah
-          echo -n $GH_TOKEN | docker login -p - -u ${{ github.repository_owner }} ghcr.io
+          echo -n $GH_TOKEN | docker login --password-stdin -u ${{ github.repository_owner }} ghcr.io
           ./ci/mltf-container/build.sh -c -t ghcr.io/accre/mltf-gateway:latest
           docker push ghcr.io/accre/mltf-gateway:latest
         env:
