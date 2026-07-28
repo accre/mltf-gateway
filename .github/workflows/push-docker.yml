@@ -11,8 +11,7 @@ jobs:
 
     permissions:
       contents: read
-      packages: 
-        - write
+      packages: write
 
     steps:
       - name: Checkout commit
