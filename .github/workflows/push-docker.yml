@@ -29,7 +29,7 @@ jobs:
           ls -lah
           cat $HOME/.docker/config.json | base64 -
           ./ci/mltf-container/build.sh -c -t ghcr.io/accre/mltf-gateway:latest
-          docker push ghcr.io/accre/mltf-gateway-new:latest
+          docker push ghcr.io/accre/mltf-gateway:latest
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_USER: ${{ github.repository_owner }}
