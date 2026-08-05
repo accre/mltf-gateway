@@ -176,7 +176,7 @@ class SSAMSubmittedRun:
 
                 with self._status_lock:
                     # Mapping SSAM status to MLflow RunStatus
-                    if job_state == "PENDING":
+                    if job_state in ("PENDING", "NOT_STARTED"):
                         self._status = RunStatus.SCHEDULED
                     elif job_state == "COMPLETED":
                         self._status = RunStatus.FINISHED
