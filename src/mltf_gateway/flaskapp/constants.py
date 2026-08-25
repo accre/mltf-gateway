@@ -21,7 +21,7 @@ def reload_config():
     BASE_URL = f"{ISSUER}/protocol/openid-connect"
 
     OAUTH2_CONFIG = {
-        "client_id": os.environ.get("CLIENT_ID"),
+        "client_id": os.environ.get("CLIENT_ID", "mlflow"),
         "client_secret": os.environ.get("CLIENT_SECRET"),
         "authorize_url": f"{BASE_URL}/auth",
         "token_url": f"{BASE_URL}/token",
