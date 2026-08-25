@@ -283,13 +283,12 @@ class GatewayServer:
         env_vars.append(f"export MLFLOW_ENABLE_SYSTEM_METRICS_LOGGING=true")
 
         if run_desc.run_id not in ("", "UNKNOWN"):
-            env_vars.append(f"export MLFLOW_RUN_ID={shlex.quote(tracking_uri)}")
+            env_vars.append(f"export MLFLOW_RUN_ID={shlex.quote(run_desc.run_id)}")
         if runtime_token:
             env_vars.append(
                 f"export MLFLOW_TRACKING_TOKEN={shlex.quote(runtime_token)}"
             )
 
-        env_vars.append(f"export MLFLOW_TRACKING_URI={shlex.quote(tracking_uri)}")
         with tempfile.NamedTemporaryFile(delete=False) as f:
             input_files["mltf_env.sh"] = MovableFileReference(f.name)
             for x in env_vars:
