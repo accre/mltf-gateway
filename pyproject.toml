@@ -38,6 +38,7 @@ dependencies = [
     "keyring>=20.0.0",
     "mlflow-skinny",
     "pytest",
+    "pytest-mock",
     "python-dotenv",
     "requests",
     "requests-mock",
