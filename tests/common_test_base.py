@@ -3,7 +3,7 @@ import subprocess
 import tempfile
 import unittest
 
-import mltf_gateway.backend_adapter
+import mltf_gateway.client.backend_adapter
 import mltf_gateway.gateway_server
 
 
@@ -13,7 +13,7 @@ class MockedGatewayTestBase(unittest.TestCase):
         self.tempDirObj = tempfile.TemporaryDirectory()
         self.tempDir = self.tempDirObj.name
         self.setEnv("TMPDIR", self.tempDir)
-        mltf_gateway.backend_adapter.INPROCESS_GATEWAY_APP = None
+        mltf_gateway.client.backend_adapter.INPROCESS_GATEWAY_APP = None
         mltf_gateway.gateway_server.RUN_DATABASE = f"{self.tempDir}/gateway_run_db.pkl"
         os.environ["DATABASE_URL"] = f"sqlite:///:memory:"
         self.tracking_uri = os.environ["MLFLOW_TRACKING_URI"] = f"file://{self.tempDir}/mlflow"

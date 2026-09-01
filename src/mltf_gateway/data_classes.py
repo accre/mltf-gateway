@@ -57,7 +57,7 @@ class RunReference:
 @dataclass
 class GatewayRunDescription:
     """
-    Wraps values passed in from mlflwo directly, except user_subject which we add from the HTTP layer to identify users
+    Wraps values passed in from mlflow directly, except user_subject which we add from the HTTP layer to identify users
     """
 
     run_id: str

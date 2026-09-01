@@ -6,7 +6,7 @@ Heavily inspired by mlflow-slurm: https://github.com/ncsa/mlflow-slurm
 from dotenv import load_dotenv
 from mlflow.projects.backend.abstract_backend import AbstractBackend
 
-from mltf_gateway.mlflow_project_backend import (
+from mltf_gateway.client.mlflow_project_backend import (
     GatewayProjectBackend,
     adapter_factory,
 )

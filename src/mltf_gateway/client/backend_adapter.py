@@ -7,7 +7,7 @@ from urllib.parse import urljoin
 import requests as requests_base
 from requests import HTTPError
 
-from mltf_gateway.flaskapp.app import create_app
+from mltf_gateway.server.app import create_app
 
 INPROCESS_GATEWAY_APP = None
 
@@ -76,7 +76,7 @@ ClientSideSubmittedRun = (
 )
 
 # Import OAuth2 client for authentication
-from mltf_gateway.oauth_client import (
+from .oauth import (
     add_auth_header_to_request,
     get_access_token,
 )

@@ -4,9 +4,8 @@ import os
 import os.path
 import requests
 import functools
-import tarfile
 import time
-import mltf_gateway.project_packer as project_packer
+import mltf_gateway.client.project_packer as project_packer
 
 URL = "https://gateway-dev.mltf.k8s.accre.vanderbilt.edu"
 

@@ -4,13 +4,18 @@
 # Runs inside.sh within a containerization environment
 #
 
-set -ex
-set -o pipefail
+echo "=================================================="
+echo "  MLTF: Entering outer.sh"
+echo "  Command line: $@"
+echo "=================================================="
 
 function echo_error() {
   # shellcheck disable=SC2238
   >&2 echo "$@"
 }
+
+set -ex
+set -o pipefail
 
 debug=false
 inside_file="$(pwd)/inside.sh"
@@ -52,6 +57,13 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
+# Choose a different target if things are running locally in debug mode
+if [ "$MLTF_DEBUG_NO_CONTAINER" == "true" ]; then
+  temptarget="${tempdir}"
+else
+  temptarget="tmp"
+fi
+
 if [ "$debug" == "true" ]; then
   set -x
 fi
@@ -64,16 +76,16 @@ cp "${inside_file}" "${tempdir}"/mltf-input/inside.sh
 source_arg=""
 if [[ -n "${source_path}" && -e "${source_path}" ]]; then
   cp "${source_path}" "${tempdir}"/mltf-input/mltf-source
-  source_arg=" -s /tmp/mltf-input/mltf-source"
-elif [[ -n "${source_path}" ]]; then
+  source_arg=" -s /${temptarget}/mltf-input/mltf-source"
+elif [[ -e "${source_path}" ]]; then
   2>&1 echo "ERROR: Command line args was specified but not found"
   exit 1
 fi
 cmdline_arg=""
 if [[ -n "${cmdline_path}" && -e "${cmdline_path}" ]]; then
   cp "${cmdline_path}" "${tempdir}"/mltf-input/mltf-cmdline
-  cmdline_arg=" -c /tmp/mltf-input/mltf-cmdline"
-elif [[ -n "${cmdline_path}" ]]; then
+  cmdline_arg=" -c /${temptarget}/mltf-input/mltf-cmdline"
+elif [[ -e "${cmdline_path}" ]]; then
   2>&1 echo "ERROR: Environment script was specified but not found"
   exit 1
 fi
@@ -94,8 +106,9 @@ fi
 
 # FIXME: Need to generatlize nerdctl/docker/podman and apptainer/singularity paths here
 # FIXME: Probe and exit early if no containerization engine is running
-echo "$PATH"
+
 if [ "$MLTF_DEBUG_NO_CONTAINER" == "true" ]; then
+    echo "Running debug no container"
     "${tempdir}"/mltf-input/inside.sh -t "${tempdir}"/mltf-input/mlflow-input.tar.gz ${cmdline_arg} ${source_arg} 2>&1 | tee "${console_output}"
 elif command -v nerdctl >&/dev/null; then
   # shellcheck disable=SC2086
@@ -129,5 +142,15 @@ elif command -v apptainer >&/dev/null; then
 else
   echo_error "Can't find containerization engine. Please add one"
   exit 1
+fi
+
+# Upload stdout to mlflow
+if [[ -n "${source_path}" && -e "${source_path}" ]]; then
+  set +x
+  source "${source_path}"
+  set -x
+  if [[ -n "$MLFLOW_TRACKING_TOKEN" && "${MLFLOW_TRACKING_URI:0:4}" == "http" ]]; then
+    curl -X
+  fi
 fi
 

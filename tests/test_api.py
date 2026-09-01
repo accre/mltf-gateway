@@ -1,9 +1,10 @@
 import unittest
 import os
 import tempfile
-import mltf_gateway.backend_adapter
+import mltf_gateway.client.backend_adapter
 import mltf_gateway.gateway_server
-from mltf_gateway.backend_adapter import RESTAdapter, INPROCESS_GATEWAY_APP
+from mltf_gateway.client.backend_adapter import RESTAdapter
+
 
 class MockAPIBaseCase(unittest.TestCase):
     def configure_flaskapp(self):
@@ -16,7 +17,7 @@ class BasicAPITestCase(unittest.TestCase):
     def setUp(self):
         self.tempDirObj = tempfile.TemporaryDirectory()
         self.tempDir = self.tempDirObj.name
-        mltf_gateway.backend_adapter.INPROCESS_GATEWAY_APP = None
+        mltf_gateway.client.backend_adapter.INPROCESS_GATEWAY_APP = None
         mltf_gateway.gateway_server.RUN_DATABASE = f"{self.tempDir}/gateway_run_db.pkl"
         os.environ["DATABASE_URL"] = f"sqlite:///:memory:"
         os.environ["MLFLOW_TRACKING_URI"] = f"file://{self.tempDir}/mlflow"

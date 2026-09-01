@@ -4,14 +4,18 @@ from mltf_gateway.submitted_runs.local_run import LocalSubmittedRun
 from .base import ExecutorBase
 import os
 import copy
+import logging
 
+log = logging.getLogger(__name__)
 class LocalExecutor(ExecutorBase):
     """
     Executor that runs jobs locally
     """
 
     def run_context_async(self, ctx, run_desc, gateway_id):
+
         cmdline_resolved = [str(x) for x in ctx["commands"]]
+        log.debug(f"Launching locally: {cmdline_resolved}")
 
         child = subprocess.Popen(
             args=cmdline_resolved,

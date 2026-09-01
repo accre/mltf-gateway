@@ -25,7 +25,7 @@ class SLURMExecutor(ExecutorBase):
 
     def ensure_files_spooled(self, input_files):
         """
-        Since we're submitting to SLURM, it's probable that /tmp on the submittion host is not visible to the
+        Since we're submitting to SLURM, it's probable that /tmp on the submittioIn host is not visible to the
         executing hosts. This function any files in the run descriptor to a spool dir if it is not in a
         whitelist of shared paths
         :param input_files: A list of MovableFileReference

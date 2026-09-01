@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from flask import Flask, render_template, g, session, jsonify
 from flask_login import login_required
 
-import mltf_gateway.flaskapp.constants as constants
+import mltf_gateway.server.constants as constants
 from .api_views.gateway_api import gateway_api_bp
 from .api_views.token_api import token_api_bp
 from .extensions import db, login_manager
@@ -14,7 +14,7 @@ from .models.user import User
 from .utils import init_db
 from .views.auth import auth_bp
 from .views.token import token_bp
-from ..gateway_server import GatewayServer
+from .gateway_server import GatewayServer
 
 logger = logging.getLogger(__name__)
 

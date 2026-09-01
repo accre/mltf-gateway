@@ -1,4 +1,14 @@
 #!/bin/bash
+echo "=================================================="
+echo "  MLTF: Entering inner.sh"
+echo "  Command line: $@"
+echo "=================================================="
+
+function echo_error() {
+  # shellcheck disable=SC2238
+  >&2 echo "$@"
+}
+
 set -x
 #
 # Runs within a container to execute client MLFlow code
@@ -14,7 +24,13 @@ while getopts "dt:s:c:" opt; do
 	t) tarball="$OPTARG" ;;
   # MLTF-generated script to be sourced just before execution
   # Since this is used to carry keys/secrets, it will be deleted
-  s) source_path="$OPTARG" ;;
+  s)
+    if [[ ! -e "$OPTARG" ]]; then
+      echo_error "source path not found: $OPTARG"
+      exit 1
+    fi
+    source_path="$OPTARG"
+    ;;
   # File containing arguments to be passed to mlflow run
   c) cmdline_path="$OPTARG" ;;
 	\?)
@@ -36,11 +52,12 @@ if [[ -n "${source_path}" && -e "${source_path}" ]]; then
   # the -x tracing because we don't want the token to leak here
   set +x
   source "${source_path}"
+  echo "Incoming environment variables: "
   # Now echo the file, but grepping out the token value
-  2>&1 grep -v "MLFLOW_TRACKING_TOKEN" | sed 's/^/+  /'
+  2>&1 grep -v "MLFLOW_TRACKING_TOKEN" ${source_path} | sed 's/^/+  /'
   set -x
   rm -f "${source_path}"
-elif [[ -n "${source_path}" ]]; then
+elif [[ -e "${source_path}" ]]; then
   2>&1 echo "ERROR: Environment script was specified but not found"
   exit 1
 fi

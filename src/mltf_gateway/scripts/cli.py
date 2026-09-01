@@ -3,6 +3,7 @@
 #
 
 import argparse
+import requests
 import logging
 import os
 import os.path
@@ -11,10 +12,10 @@ from datetime import datetime, timezone
 
 import jwt
 
-from mltf_gateway.mlflow_project_backend import GatewayProjectBackend
+from mltf_gateway.client.mlflow_project_backend import GatewayProjectBackend
 
 # Import OAuth2 client
-from mltf_gateway.oauth_client import (
+from mltf_gateway.client.oauth import (
     is_authenticated,
     get_stored_credentials,
     authenticate_with_device_flow,
@@ -43,20 +44,39 @@ def require_auth(func):
 def handle_show_subcommand(args):
     """Handle the 'show' subcommand."""
     backend = GatewayProjectBackend()
-    details = backend.show_details(args.run_id, args.show_logs)
+    run_id = args.run_id
+    if not run_id:
+        run_id = get_latest_submission(backend)
+
+    if not run_id:
+        print("No tasks found")
+        sys.exit(1)
+
+    details = backend.show_details(run_id, args.show_logs)
 
     print(f"Status: {details.get('status')}")
-
+    import pprint
+    pprint.pprint(details)
     if "failure_reason" in details:
         print(f"Failure Reason: {details.get('failure_reason')}")
 
-    if "logs" in details and details["logs"] is not None:
+    if args.show_logs and "logs" in details and details["logs"] is not None:
         print("--- Logs ---")
         print(details["logs"])
     elif args.show_logs:
         print("--- Logs ---")
         print("(No logs available)")
 
+@require_auth
+def get_latest_submission(backend = None) -> str:
+    backend = backend or GatewayProjectBackend()
+    to_decode = backend.list(True, False)
+    if to_decode:
+        print("Tasks:")
+        to_decode.sort(key=lambda x: x["creation_time"], reverse=True)
+        return to_decode[0]['gateway_id']
+    else:
+        return False
 
 # Subcommand function definitions (grouped together)
 @require_auth
@@ -115,7 +135,7 @@ def handle_delete_subcommand(args):
 def handle_artifacts_subcommand(args):
     """Handle the 'artifacts' subcommand."""
     from mlflow.tracking import MlflowClient
-    from mltf_gateway.oauth_client import get_access_token
+    from mltf_gateway.oauth import get_access_token
 
     backend = GatewayProjectBackend()
     # List all runs to find the mapping from gateway_id to run_id
@@ -146,13 +166,31 @@ def handle_artifacts_subcommand(args):
             for artifact in artifacts:
                 # Construct the download URL as requested
                 base_url = tracking_uri.rstrip("/")
+                import pprint
+                pprint.pprint(artifact)
                 download_url = f"{base_url}/get-artifact?path={artifact.path}&run_uuid={target_run_id}"
+                get_presigned_artifact_url(tracking_uri, target_run_id, artifact.path)
                 print(f"  {artifact.path} (Download URL: {download_url})")
         else:
             print(f"No artifacts found for run {args.run_id}.")
     except Exception as e:
         print(f"Error retrieving artifacts: {e}")
 
+def get_presigned_artifact_url(tracking_uri, run_id, artifact_path):
+    request = {"run_id": run_id,
+               "path": artifact_path}
+    headers = {"Authorization": f"Bearer {get_stored_credentials()['access_token']}",
+               "Content-Type": "application/json"}
+    import pprint
+    pprint.pprint(headers)
+    uri = f"https://mlflow.mltf.vu/ajax-api/2.0/mlflow-artifacts/presigned/35/9475ca9ca1ad4227be17f97d9b805316/artifacts/myTrainingScript.py"
+
+    log.debug(f"Getting artifacts from {uri}")
+    resp = requests.get(uri, headers=headers)
+    print(resp.text)
+    resp.raise_for_status()
+    import pprint
+    pprint.pprint(resp.json())
 
 def handle_login_subcommand(args):
     """Handle the 'login' subcommand."""
@@ -207,7 +245,7 @@ def handle_auth_status_subcommand(args):
 
 def handle_server_subcommand(args):
     """Handle the 'server' subcommand - start HTTP server"""
-    from mltf_gateway.flaskapp.app import create_app
+    from mltf_gateway.server.app import create_app
     import os
 
     app = create_app()
@@ -224,7 +262,7 @@ def handle_server_subcommand(args):
 
 def create_parser():
     parser = argparse.ArgumentParser(description="CLI tool for managing MLTF jobs")
-    parser.add_argument("--debug", dest="debug", default=False)
+    parser.add_argument("--debug", dest="debug", default=False, action='store_true')
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
     # List command
@@ -263,7 +301,7 @@ def create_parser():
 
     # show command
     show_parser = subparsers.add_parser("show", help="Show the status of a job")
-    show_parser.add_argument("run_id", help="The ID of the run to show")
+    show_parser.add_argument("run_id", help="The ID of the run to show", default="", nargs="?")
     show_parser.add_argument(
         "--show-logs", action="store_true", help="Show logs of the run"
     )

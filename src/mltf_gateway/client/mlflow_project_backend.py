@@ -13,9 +13,9 @@ from mlflow.projects.utils import (
 )
 from mlflow.utils.mlflow_tags import MLFLOW_USER
 
-from mltf_gateway.backend_adapter import RESTAdapter
-from mltf_gateway.oauth_client import get_access_token
-from mltf_gateway.project_packer import prepare_tarball, produce_tarball
+from mltf_gateway.client.backend_adapter import RESTAdapter
+from .oauth import get_access_token
+from mltf_gateway.client.project_packer import prepare_tarball, produce_tarball
 from mltf_gateway.submitted_runs.client_run import ClientSideSubmittedRun
 from mltf_gateway.utils import get_tracking_uri
 
@@ -105,7 +105,7 @@ class GatewayProjectBackend(AbstractBackend):
         )
         mlflow_run = mlflow_run_obj.info.run_id
 
-        _logger.info("Bundling user environment")
+        _logger.info(f"Bundling user environment at {work_dir}")
         file_catalog = prepare_tarball(work_dir)
         tarball_limit = 1024 * 1024 * 1024  # 1Gigabyte
         tarball_size = 0

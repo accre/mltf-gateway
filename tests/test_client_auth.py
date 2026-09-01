@@ -3,10 +3,10 @@ import tempfile
 import unittest
 import copy
 
-from mltf_gateway.flaskapp.constants import reload_config
-import mltf_gateway.backend_adapter
+from mltf_gateway.server.constants import reload_config
+import mltf_gateway.client.backend_adapter
 import mltf_gateway.gateway_server
-import mltf_gateway.oauth_client as oauth_client
+import mltf_gateway.oauth as oauth_client
 import keyring
 import keyring.backend
 from keyring.compat import properties
@@ -61,7 +61,7 @@ class ClientAuthTestCase(unittest.TestCase):
         reload_config()
         self.old_keyring = keyring.get_keyring()
         keyring.set_keyring(TestingKeyring())
-        mltf_gateway.backend_adapter.INPROCESS_GATEWAY_APP = None
+        mltf_gateway.client.backend_adapter.INPROCESS_GATEWAY_APP = None
         mltf_gateway.gateway_server.RUN_DATABASE = f"{self.tempDir}/gateway_run_db.pkl"
         os.environ["DATABASE_URL"] = f"sqlite:///:memory:"
         self.tracking_uri = os.environ["MLFLOW_TRACKING_URI"] = f"file://{self.tempDir}/mlflow"
