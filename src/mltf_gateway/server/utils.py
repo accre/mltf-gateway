@@ -2,10 +2,12 @@ import secrets
 import time
 from functools import wraps
 from urllib.parse import urlencode
+import json
 
 import requests
 from flask import current_app, session, abort, request, g, jsonify
 from flask_login import login_user
+from sqlalchemy.orm import MappedAsDataclass, DeclarativeBase
 
 from .constants import OAUTH2_CONFIG
 from .extensions import db
@@ -13,6 +15,24 @@ from .jwt_decoder import decode
 from .models.token import Token
 from .models.user import User
 
+from sqlalchemy import PickleType, Text, TypeDecorator
+import sqlalchemy
+import jsonpickle
+
+
+class TextPickleType(TypeDecorator):
+
+    impl = sqlalchemy.VARCHAR
+
+    def process_bind_param(self, value, dialect):
+        if value is not None:
+            value = jsonpickle.dumps(value)
+        return value
+
+    def process_result_value(self, value, dialect):
+        if value is not None:
+            value = jsonpickle.loads(value)
+        return value
 
 def init_db():
     """Initialize the database and create tables if they do not exist"""
@@ -180,6 +200,9 @@ def require_oauth_token(f):
         g.user = {
             "email": decoded.get("email", "NA"),
             "username": decoded.get("name", "NA"),
+            "iss": decoded.get("iss"),
+            "sub": decoded.get("sub"),
+            "azp": decoded.get("azp"),
             "runtime_token": token,
         }
 

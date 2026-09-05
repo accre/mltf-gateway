@@ -55,8 +55,6 @@ def handle_show_subcommand(args):
     details = backend.show_details(run_id, args.show_logs)
 
     print(f"Status: {details.get('status')}")
-    import pprint
-    pprint.pprint(details)
     if "failure_reason" in details:
         print(f"Failure Reason: {details.get('failure_reason')}")
 

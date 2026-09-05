@@ -12,6 +12,7 @@ class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), nullable=False)
     email = db.Column(db.String(64), nullable=True)
+    sub = db.Column(db.String(64), nullable=False)
 
 
 @login_manager.user_loader

@@ -15,6 +15,7 @@ from mltf_gateway.executors.base import get_script, ExecutorBase
 from mltf_gateway.executors.local_executor import LocalExecutor
 from mltf_gateway.executors.slurm_executor import SLURMExecutor
 from mltf_gateway.executors.ssam_executor import SSAMExecutor
+from mltf_gateway.server.extensions import db
 from mltf_gateway.submitted_runs.server_run import (
     ServerSideSubmittedRunDescription,
 )
@@ -87,10 +88,6 @@ class GatewayServer:
         self.outside_script = outside_script or "outside.sh"
         self.tracking_server = tracking_server or get_tracking_uri()
 
-        # List of runs we know about
-        # Should be persisted to a database
-        self.runs = unpersist_runs()
-
     def get_health(self):
         if hasattr(self.executor, "get_health"):
             return self.executor.get_health()
@@ -106,10 +103,9 @@ class GatewayServer:
         """
         # FIXME support filtering jobs based on list_all param
         ret = []
-        for idx in range(len(self.runs)):
-            r = self.runs[idx]
-            if r.run_desc.user_subject != user_subject:
-                continue
+        runs = db.select(ServerSideSubmittedRunDescription).where(ServerSideSubmittedRunDescription.user_subject == user_subject)
+
+        for r in db.session.scalars(runs):
             ret.append(r.to_client_json())
 
         return ret
@@ -121,16 +117,17 @@ class GatewayServer:
         :param ref: Integer reference to the run
         :return: GatewaySubmittedRun referred to by reference
         """
-        for r in self.runs:
-            if ref.gateway_id == r.gateway_id:
-                return r
+        query = db.select(ServerSideSubmittedRunDescription).where(ServerSideSubmittedRunDescription.gateway_id == ref.gateway_id)
+        ret = db.session.scalar(query)
+        if ret:
+            return ret
         raise IndexError()
 
-    def runid_to_reference(self, run_id: int):
-        for run in self.runs:
-            if run.gateway_id == run_id:
-                return run
-        raise IndexError()
+    # def runid_to_reference(self, run_id: int):
+    #     for run in self.runs:
+    #         if run.gateway_id == run_id:
+    #             return run
+    #     raise IndexError()
 
     def run_to_reference(self, run: ServerSideSubmittedRunDescription) -> RunReference:
         """
@@ -148,20 +145,20 @@ class GatewayServer:
         """
         return self.reference_to_run(run_ref).submitted_run.wait()
 
-    def get_status(self, run_ref):
+    def get_status(self, run_ref, user_subject):
         """
         Get execution status of a run
         :param run_ref: Integer reference to run
-        :return: Stateus
+        :return: Status
         """
         return self.reference_to_run(run_ref).submitted_run.get_status()
 
-    def show(self, run_id: str):
+    def show(self, run_id: str, user_subject):
         """Get the status of a run."""
         run_ref = RunReference(run_id)
-        return self.get_status(run_ref)
+        return self.get_status(run_ref, user_subject)
 
-    def show_details(self, run_id: str, show_logs: bool):
+    def show_details(self, run_id: str, user_subject, show_logs: bool):
         """Get details of a run."""
         run_ref = RunReference(run_id)
         try:
@@ -174,22 +171,20 @@ class GatewayServer:
         else:
             # Fallback for other run types
             status = submitted_run.get_status()
-            from mlflow.entities import RunStatus
 
-            # return {"status": RunStatus.to_string(status)}
             return {"status": status}
 
-    def delete(self, run_id: str):
+    def delete(self, run_id: str, user_subject):
         """Delete a run."""
         run_ref = RunReference(run_id)
         try:
             run_to_delete = self.reference_to_run(run_ref)
         except IndexError:
             return {"error": f"Run with ID '{run_id}' not found."}, 404
-
+        run_to_delete.raise_can_write(user_subject)
         run_to_delete.submitted_run.cancel()
-        self.runs = [run for run in self.runs if run.gateway_id != run_id]
-        persist_runs(self.runs)
+        db.session.delete(run_to_delete)
+        db.session.commit()
 
         return {"run_id": run_id, "message": "Job deleted successfully"}
 
@@ -244,8 +239,8 @@ class GatewayServer:
         gateway_id = str(uuid.uuid1())
         async_req = self.executor.run_context_async(exec_context, run_desc, gateway_id)
         run = ServerSideSubmittedRunDescription(run_desc, async_req, gateway_id)
-        self.runs.append(run)
-        persist_runs(self.runs)
+        db.session.add(run)
+        db.session.commit()
         return run
 
     # See docs for RunReference for an explanation

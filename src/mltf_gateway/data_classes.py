@@ -3,6 +3,10 @@ import os.path
 import shutil
 from dataclasses import dataclass
 
+from sqlalchemy.orm import Mapped
+
+from mltf_gateway.server.extensions import db
+from mltf_gateway.server.utils import TextPickleType
 
 @dataclass
 class MovableFileReference:
@@ -53,18 +57,17 @@ class RunReference:
     # For now, this is just the index into GatewayServer's runs list where the "real" object lives
     gateway_id: str
 
-
 @dataclass
-class GatewayRunDescription:
+class GatewayRunDescription():
     """
     Wraps values passed in from mlflow directly, except user_subject which we add from the HTTP layer to identify users
     """
 
-    run_id: str
-    tarball_path: str
-    entry_point: str
-    params: dict
-    backend_config: dict
-    tracking_uri: str
-    experiment_id: str
-    user_subject: str
+    run_id: Mapped[str] = db.mapped_column()
+    tarball_path: Mapped[str] = db.mapped_column()
+    entry_point: Mapped[str] = db.mapped_column()
+    params: Mapped[dict] = db.mapped_column(TextPickleType())
+    backend_config: Mapped[dict] = db.mapped_column(TextPickleType())
+    tracking_uri: Mapped[str] = db.mapped_column()
+    experiment_id: Mapped[str] = db.mapped_column()
+    user_subject: Mapped[str] = db.mapped_column()

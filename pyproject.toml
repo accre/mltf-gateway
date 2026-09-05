@@ -35,6 +35,7 @@ dependencies = [
     "flask-sqlalchemy",
     "gunicorn",
     "jinja2",
+    "jsonpickle",
     "keyring>=20.0.0",
     "mlflow-skinny",
     "pytest",

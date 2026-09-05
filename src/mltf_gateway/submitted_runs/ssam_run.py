@@ -6,6 +6,7 @@ import logging
 import time
 from threading import RLock
 from typing import List
+from types import SimpleNamespace
 
 import requests
 from mlflow.entities import RunStatus
@@ -18,6 +19,8 @@ _logger = logging.getLogger(__name__)
 
 class SSAMSubmittedRun:
     """
+    SERVER-SIDE: Stores information about a Run being executed via SSAM
+
     Instance of SubmittedRun
     corresponding to a Slum Job launched through SSAM to run an MLflow
     project.
@@ -224,3 +227,11 @@ class SSAMSubmittedRun:
         """Restore state from the unpickled state values."""
         self.__dict__.update(state)
         self._status_lock = RLock()
+
+    def to_dict(self):
+        return self.__getstate__()
+
+    def from_dict(cls, input):
+        input = input.copy()
+        input['_status_lock'] = RLock()
+        return type(SSAMSubmittedRun, (object, ), input)

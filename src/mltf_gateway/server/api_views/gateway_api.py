@@ -16,6 +16,7 @@ def secure_data():
             "message": "Hello",
             "email": g.user["email"],
             "username": g.user["username"],
+            "sub": g.user["sub"],
             "runtime_token": g.user["runtime_token"],
         }
     )
@@ -43,13 +44,13 @@ def submit():
     backend_config = json.loads(request.form["backend_config"])
     tracking_uri = request.form["tracking_uri"]
     experiment_id = request.form["experiment_id"]
-    user_subj = g.user["username"]
+    user_subj = g.user["sub"]
     runtime_token = g.user["runtime_token"]
 
     with tempfile.NamedTemporaryFile(delete=False) as tmp:
         tarball.save(tmp.name)
-        gateway_server = current_app.extensions["mltf_gateway"]
-        run_reference = gateway_server.enqueue_run_client(
+        executor = current_app.extensions["mltf_gateway"]
+        run_reference = executor.enqueue_run_client(
             run_id=run_id,
             tarball_path=tmp.name,
             entry_point=entry_point,
@@ -66,17 +67,17 @@ def submit():
 @gateway_api_bp.route("/jobs", methods=["GET"])
 @require_oauth_token
 def list_jobs():
-    gateway_server = current_app.extensions["mltf_gateway"]
-    jobs = gateway_server.list(list_all=True, user_subject=g.user["username"])
+    executor = current_app.extensions["mltf_gateway"]
+    jobs = executor.list(list_all=True, user_subject=g.user["sub"])
     return jsonify(jobs), 200
 
 
 @gateway_api_bp.route("/jobs/<job_id>", methods=["GET"])
 @require_oauth_token
 def show_job(job_id):
-    gateway_server = current_app.extensions["mltf_gateway"]
+    executor = current_app.extensions["mltf_gateway"]
     show_logs = request.args.get("show_logs", "false").lower() == "true"
-    details = gateway_server.show_details(job_id, show_logs)
+    details = executor.show_details(job_id, show_logs=show_logs, user_subject=g.user["sub"])
     if isinstance(details, tuple) and len(details) == 2:
         response, status_code = details
         return jsonify(response), status_code
@@ -87,8 +88,8 @@ def show_job(job_id):
 @gateway_api_bp.route("/jobs/<job_id>", methods=["DELETE"])
 @require_oauth_token
 def delete_job(job_id):
-    gateway_server = current_app.extensions["mltf_gateway"]
-    result = gateway_server.delete(job_id)
+    executor = current_app.extensions["mltf_gateway"]
+    result = executor.delete(job_id, user_subject=g.user["sub"])
     if isinstance(result, tuple) and len(result) == 2:
         response, status_code = result
         return jsonify(response), status_code

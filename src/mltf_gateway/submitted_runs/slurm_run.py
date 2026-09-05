@@ -3,6 +3,8 @@ import logging
 
 class SLURMSubmittedRun:
     """
+    SERVER-SIDE: Stores information about a Run being executed via SLURM
+
     Instance of SubmittedRun
     corresponding to a Slurm Job to run an MLflow
     project.

@@ -6,7 +6,8 @@ load_dotenv()
 
 # check wellknown here:
 # https://keycloak.k8s.accre.vanderbilt.edu/realms/mltf-dual-login/.well-known/openid-configuration
-
+#  -> .jwks_uri is ...
+# JWKS URI https://keycloak.k8s.accre.vanderbilt.edu/realms/mltf-dual-login/protocol/openid-connect/certs
 def reload_config():
     """
     Both set the globals directly and return them to quiet lint and also
