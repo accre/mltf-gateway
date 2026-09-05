@@ -18,7 +18,7 @@ class Director(db.Model):
 
 
 
-class ServerSideSubmittedRunDescription(db.Model):
+class TaskDescription(db.Model):
     """
     Stores information about a Run submitted to an executor.
 
@@ -82,8 +82,8 @@ class ServerSideSubmittedRunDescription(db.Model):
             raise RuntimeError("Forbidden")
 
 
-@event.listens_for(ServerSideSubmittedRunDescription, "before_insert")
-@event.listens_for(ServerSideSubmittedRunDescription, "before_update")
+@event.listens_for(TaskDescription, "before_insert")
+@event.listens_for(TaskDescription, "before_update")
 def reset_subject(mapper,connection, target):
     """
     Keep inner and outer definition of user_subject in sync

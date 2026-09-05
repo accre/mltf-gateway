@@ -17,7 +17,7 @@ from mltf_gateway.executors.slurm_executor import SLURMExecutor
 from mltf_gateway.executors.ssam_executor import SSAMExecutor
 from mltf_gateway.server.extensions import db
 from mltf_gateway.submitted_runs.server_run import (
-    ServerSideSubmittedRunDescription,
+    TaskDescription,
 )
 from mltf_gateway.utils import get_tracking_uri
 
@@ -62,7 +62,7 @@ class GatewayServer:
     them via plugabble executors
     """
 
-    runs: list[ServerSideSubmittedRunDescription]
+    runs: list[TaskDescription]
 
     def __init__(
         self,
@@ -103,21 +103,21 @@ class GatewayServer:
         """
         # FIXME support filtering jobs based on list_all param
         ret = []
-        runs = db.select(ServerSideSubmittedRunDescription).where(ServerSideSubmittedRunDescription.user_subject == user_subject)
+        runs = db.select(TaskDescription).where(TaskDescription.user_subject == user_subject)
 
         for r in db.session.scalars(runs):
             ret.append(r.to_client_json())
 
         return ret
 
-    def reference_to_run(self, ref: RunReference) -> ServerSideSubmittedRunDescription:
+    def reference_to_run(self, ref: RunReference) -> TaskDescription:
         """
         We store/persist run information within GatewayServer, but we shouldn't bother the client with those details.
         Instead, give the client an (opaque) integer reference to the run object
         :param ref: Integer reference to the run
         :return: GatewaySubmittedRun referred to by reference
         """
-        query = db.select(ServerSideSubmittedRunDescription).where(ServerSideSubmittedRunDescription.gateway_id == ref.gateway_id)
+        query = db.select(TaskDescription).where(TaskDescription.gateway_id == ref.gateway_id)
         ret = db.session.scalar(query)
         if ret:
             return ret
@@ -129,7 +129,7 @@ class GatewayServer:
     #             return run
     #     raise IndexError()
 
-    def run_to_reference(self, run: ServerSideSubmittedRunDescription) -> RunReference:
+    def run_to_reference(self, run: TaskDescription) -> RunReference:
         """
         See reference_to_run. This is the opposite
         :param run: GatewaySubmittedRun object
@@ -238,7 +238,7 @@ class GatewayServer:
 
         gateway_id = str(uuid.uuid1())
         async_req = self.executor.run_context_async(exec_context, run_desc, gateway_id)
-        run = ServerSideSubmittedRunDescription(run_desc, async_req, gateway_id)
+        run = TaskDescription(run_desc, async_req, gateway_id)
         db.session.add(run)
         db.session.commit()
         return run

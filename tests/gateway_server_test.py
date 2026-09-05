@@ -13,7 +13,7 @@ from mltf_gateway.gateway_server import (
     SLURMExecutor,
 )
 from mltf_gateway.submitted_runs.server_run import (
-    ServerSideSubmittedRunDescription,
+    TaskDescription,
 )
 from tests.common_test_base import MockedGatewayTestBase
 
@@ -67,7 +67,7 @@ class GatewayServerTest(MockedGatewayTestBase):
         srv = GatewayServer(inside_script="test/inside-noop.sh",tracking_server=self.tracking_uri)
         tarball = get_script("mltf-hello-world.tar.gz")
         ret = srv.enqueue_run("", tarball, "", {}, {}, self.tracking_uri, "", "", "FAKE-TOKEN")
-        self.assertIsInstance(ret, ServerSideSubmittedRunDescription)
+        self.assertIsInstance(ret, TaskDescription)
         ret.submitted_run.wait()
         if not ret.submitted_run.get_status() == RunStatus.to_string(RunStatus.FINISHED):
             mylog, _ = ret.submitted_run.command_proc.communicate()
@@ -81,7 +81,7 @@ class GatewayServerTest(MockedGatewayTestBase):
             "", tarball, "", {}, {}, self.tracking_uri, "", "", "FAKE-TOKEN"
         )
         server_id = srv.reference_to_run(client_id)
-        self.assertIsInstance(server_id, ServerSideSubmittedRunDescription)
+        self.assertIsInstance(server_id, TaskDescription)
         server_id.submitted_run.wait()
         self.assertEqual(
             server_id.submitted_run.get_status(),
