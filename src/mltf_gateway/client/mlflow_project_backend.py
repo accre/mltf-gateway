@@ -1,9 +1,12 @@
 import json
 import logging
 import os
+import sys
+from functools import wraps
 
 import jwt
 import mlflow
+import requests
 from dotenv import load_dotenv
 from mlflow import tracking
 from mlflow.projects.backend.abstract_backend import AbstractBackend
@@ -14,12 +17,12 @@ from mlflow.projects.utils import (
 from mlflow.utils.mlflow_tags import MLFLOW_USER
 
 from mltf_gateway.client.backend_adapter import RESTAdapter
-from .oauth import get_access_token
 from mltf_gateway.client.project_packer import prepare_tarball, produce_tarball
 from mltf_gateway.submitted_runs.client_run import ClientSideSubmittedRun
 from mltf_gateway.utils import get_tracking_uri
+from .oauth import get_access_token
 
-_logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 def adapter_factory() -> RESTAdapter:
@@ -32,6 +35,21 @@ def adapter_factory() -> RESTAdapter:
     gateway_uri = os.environ.get("MLTF_GATEWAY_URI", "https://gw.mltf.vu")
     return RESTAdapter(gateway_uri=gateway_uri)
 
+def trap_common_api_errors(f):
+    """
+    Make it so raw urllib/requests/etc errors don't throw stacktrace
+    """
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        try:
+            return f(*args, **kwargs)
+        except requests.exceptions.ConnectionError as e:
+            print("Cannot connect to gateway. Please verify URL is correct")
+            sys.exit(1)
+        except Exception as e:
+            print("Unknown error was received. Please report this")
+            print("  error: {e}")
+    return wrapper
 
 class GatewayProjectBackend(AbstractBackend):
     """
@@ -55,6 +73,7 @@ class GatewayProjectBackend(AbstractBackend):
         impl = adapter_factory()
         return impl.delete(run_id)
 
+    @trap_common_api_errors
     def run(
         self,
         project_uri,
@@ -66,7 +85,7 @@ class GatewayProjectBackend(AbstractBackend):
         experiment_id,
     ):
         if tracking_uri.startswith("file://"):
-            _logger.warning("""Tracking URI was not set""")
+            logger.warning("""Tracking URI was not set""")
             # FIXME We should eb able to get this from the server
             tracking_uri = get_tracking_uri()
 
@@ -105,7 +124,7 @@ class GatewayProjectBackend(AbstractBackend):
         )
         mlflow_run = mlflow_run_obj.info.run_id
 
-        _logger.info(f"Bundling user environment at {work_dir}")
+        logger.info(f"Bundling user environment at {work_dir}")
         file_catalog = prepare_tarball(work_dir)
         tarball_limit = 1024 * 1024 * 1024  # 1Gigabyte
         tarball_size = 0
@@ -118,7 +137,7 @@ class GatewayProjectBackend(AbstractBackend):
         project_tarball = None
         try:
             project_tarball = produce_tarball(file_catalog)
-            _logger.info(f"Tarball produced at {project_tarball}")
+            logger.info(f"Tarball produced at {project_tarball}")
             ret = impl.enqueue_run(
                 mlflow_run,
                 project_tarball,
@@ -128,7 +147,7 @@ class GatewayProjectBackend(AbstractBackend):
                 tracking_uri,
                 experiment_id,
             )
-            _logger.info(f"Execution enqueued: {ret}")
+            logger.info(f"Execution enqueued: {ret}")
             print(
                 f"Find your MLFlow run at:\n\n  {tracking_uri}/#/experiments/{experiment_id}/runs/{mlflow_run}\n\n"
             )
