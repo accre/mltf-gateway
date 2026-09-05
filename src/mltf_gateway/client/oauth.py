@@ -116,7 +116,7 @@ def poll_token(device_code, interval=0):
 
     # Wait for 5 seconds to poll tokens
     if not interval:
-        interval = os.environ.get('MLTF_TEST_TOKEN_POLL_INTERVAL', 5)
+        interval = os.environ.get("MLTF_TEST_TOKEN_POLL_INTERVAL", 5)
     data = {
         "client_id": CLIENT_ID,
         "device_code": device_code,
@@ -129,7 +129,7 @@ def poll_token(device_code, interval=0):
 
             if response.status_code == 200:
                 ret = response.json()
-                for x in ('access_token', 'expires_in'):
+                for x in ("access_token", "expires_in"):
                     if x not in ret:
                         raise ValueError(f"Auth server didn't include {x} in response")
                 return ret

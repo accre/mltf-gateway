@@ -71,9 +71,7 @@ _logger = logging.getLogger(__name__)
 
 import mltf_gateway.submitted_runs.client_run
 
-ClientSideSubmittedRun = (
-    mltf_gateway.submitted_runs.client_run.ClientSideSubmittedRun
-)
+ClientSideSubmittedRun = mltf_gateway.submitted_runs.client_run.ClientSideSubmittedRun
 
 # Import OAuth2 client for authentication
 from .oauth import (

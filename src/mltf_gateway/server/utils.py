@@ -34,6 +34,7 @@ class TextPickleType(TypeDecorator):
             value = jsonpickle.loads(value)
         return value
 
+
 def init_db():
     """Initialize the database and create tables if they do not exist"""
     with current_app.app_context():

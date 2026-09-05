@@ -7,6 +7,8 @@ import copy
 import logging
 
 log = logging.getLogger(__name__)
+
+
 class LocalExecutor(ExecutorBase):
     """
     Executor that runs jobs locally

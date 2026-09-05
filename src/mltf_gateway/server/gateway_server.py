@@ -103,7 +103,9 @@ class GatewayServer:
         """
         # FIXME support filtering jobs based on list_all param
         ret = []
-        runs = db.select(TaskDescription).where(TaskDescription.user_subject == user_subject)
+        runs = db.select(TaskDescription).where(
+            TaskDescription.user_subject == user_subject
+        )
 
         for r in db.session.scalars(runs):
             ret.append(r.to_client_json())
@@ -117,7 +119,9 @@ class GatewayServer:
         :param ref: Integer reference to the run
         :return: GatewaySubmittedRun referred to by reference
         """
-        query = db.select(TaskDescription).where(TaskDescription.gateway_id == ref.gateway_id)
+        query = db.select(TaskDescription).where(
+            TaskDescription.gateway_id == ref.gateway_id
+        )
         ret = db.session.scalar(query)
         if ret:
             return ret

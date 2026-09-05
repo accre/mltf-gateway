@@ -345,7 +345,9 @@ class SSAMExecutor(ExecutorBase):
                 ("slurm_request", (None, json.dumps(slurm_request)))
             )
 
-            logger.debug(f"POSTING TO SLURM: data: {multipart_form_data}\nheaders: {headers}")
+            logger.debug(
+                f"POSTING TO SLURM: data: {multipart_form_data}\nheaders: {headers}"
+            )
             response = requests.post(
                 f"{self.ssam_url}/api/slurm",
                 files=multipart_form_data,

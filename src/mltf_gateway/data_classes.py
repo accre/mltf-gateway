@@ -8,6 +8,7 @@ from sqlalchemy.orm import Mapped
 from mltf_gateway.server.extensions import db
 from mltf_gateway.server.utils import TextPickleType
 
+
 @dataclass
 class MovableFileReference:
     """
@@ -57,8 +58,9 @@ class RunReference:
     # For now, this is just the index into GatewayServer's runs list where the "real" object lives
     gateway_id: str
 
+
 @dataclass
-class GatewayRunDescription():
+class GatewayRunDescription:
     """
     Wraps values passed in from mlflow directly, except user_subject which we add from the HTTP layer to identify users
     """

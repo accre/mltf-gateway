@@ -10,7 +10,6 @@ class Run(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     run_id = db.Column(db.String(64), nullable=False)
 
-
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     access_token = db.Column(db.String(512), nullable=False)
     refresh_token = db.Column(db.String(512), nullable=True)

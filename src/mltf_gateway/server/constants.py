@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
 # check wellknown here:
 # https://keycloak.k8s.accre.vanderbilt.edu/realms/mltf-dual-login/.well-known/openid-configuration
 #  -> .jwks_uri is ...
@@ -35,4 +36,6 @@ def reload_config():
         "issuer": ISSUER,
     }
     return REALM, KEYCLOAK_URL, ISSUER, BASE_URL, OAUTH2_CONFIG
+
+
 REALM, KEYCLOAK_URL, ISSUER, BASE_URL, OAUTH2_CONFIG = reload_config()

@@ -26,6 +26,7 @@ from mltf_gateway.utils import get_tracking_uri
 
 log = logging.getLogger("mltf-cli")
 
+
 # Decorator for authentication checks
 def require_auth(func):
     """Decorator to require authentication before executing a command"""
@@ -65,16 +66,18 @@ def handle_show_subcommand(args):
         print("--- Logs ---")
         print("(No logs available)")
 
+
 @require_auth
-def get_latest_submission(backend = None) -> str:
+def get_latest_submission(backend=None) -> str:
     backend = backend or GatewayProjectBackend()
     to_decode = backend.list(True, False)
     if to_decode:
         print("Tasks:")
         to_decode.sort(key=lambda x: x["creation_time"], reverse=True)
-        return to_decode[0]['gateway_id']
+        return to_decode[0]["gateway_id"]
     else:
         return False
+
 
 # Subcommand function definitions (grouped together)
 @require_auth
@@ -165,6 +168,7 @@ def handle_artifacts_subcommand(args):
                 # Construct the download URL as requested
                 base_url = tracking_uri.rstrip("/")
                 import pprint
+
                 pprint.pprint(artifact)
                 download_url = f"{base_url}/get-artifact?path={artifact.path}&run_uuid={target_run_id}"
                 get_presigned_artifact_url(tracking_uri, target_run_id, artifact.path)
@@ -174,12 +178,15 @@ def handle_artifacts_subcommand(args):
     except Exception as e:
         print(f"Error retrieving artifacts: {e}")
 
+
 def get_presigned_artifact_url(tracking_uri, run_id, artifact_path):
-    request = {"run_id": run_id,
-               "path": artifact_path}
-    headers = {"Authorization": f"Bearer {get_stored_credentials()['access_token']}",
-               "Content-Type": "application/json"}
+    request = {"run_id": run_id, "path": artifact_path}
+    headers = {
+        "Authorization": f"Bearer {get_stored_credentials()['access_token']}",
+        "Content-Type": "application/json",
+    }
     import pprint
+
     pprint.pprint(headers)
     uri = f"https://mlflow.mltf.vu/ajax-api/2.0/mlflow-artifacts/presigned/35/9475ca9ca1ad4227be17f97d9b805316/artifacts/myTrainingScript.py"
 
@@ -188,7 +195,9 @@ def get_presigned_artifact_url(tracking_uri, run_id, artifact_path):
     print(resp.text)
     resp.raise_for_status()
     import pprint
+
     pprint.pprint(resp.json())
+
 
 def handle_login_subcommand(args):
     """Handle the 'login' subcommand."""
@@ -260,7 +269,7 @@ def handle_server_subcommand(args):
 
 def create_parser():
     parser = argparse.ArgumentParser(description="CLI tool for managing MLTF jobs")
-    parser.add_argument("--debug", dest="debug", default=False, action='store_true')
+    parser.add_argument("--debug", dest="debug", default=False, action="store_true")
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
     # List command
@@ -299,7 +308,9 @@ def create_parser():
 
     # show command
     show_parser = subparsers.add_parser("show", help="Show the status of a job")
-    show_parser.add_argument("run_id", help="The ID of the run to show", default="", nargs="?")
+    show_parser.add_argument(
+        "run_id", help="The ID of the run to show", default="", nargs="?"
+    )
     show_parser.add_argument(
         "--show-logs", action="store_true", help="Show logs of the run"
     )

@@ -3,7 +3,13 @@ from dataclasses import dataclass, field
 
 from mlflow.projects import SubmittedRun
 from sqlalchemy import event
-from sqlalchemy.orm import DeclarativeBase, Mapped, MappedAsDataclass, mapped_column, composite
+from sqlalchemy.orm import (
+    DeclarativeBase,
+    Mapped,
+    MappedAsDataclass,
+    mapped_column,
+    composite,
+)
 from mltf_gateway.server.extensions import db
 from mltf_gateway.data_classes import GatewayRunDescription
 from mltf_gateway.server.utils import TextPickleType
@@ -16,6 +22,7 @@ class Director(db.Model):
     name: Mapped[str] = db.mapped_column(nullable=False, unique=True)
     run_desc: Mapped[GatewayRunDescription] = db.mapped_column(TextPickleType())
 
+
 class TaskDescription(db.Model):
     """
     Stores information about a Run submitted to an executor.
@@ -23,9 +30,12 @@ class TaskDescription(db.Model):
     run_desc: the user-provided definition of the run
     submitted_run: handle pointing to the actual execution (e.g. SLURM job)
     """
+
     __tablename__ = "test5"
 
-    db_idx: Mapped[int] = db.mapped_column(primary_key=True, init=False, autoincrement=True, nullable=False)
+    db_idx: Mapped[int] = db.mapped_column(
+        primary_key=True, init=False, autoincrement=True, nullable=False
+    )
     run_desc: Mapped[GatewayRunDescription] = db.mapped_column(TextPickleType())
     submitted_run: Mapped[SubmittedRun] = db.mapped_column(TextPickleType())
     gateway_id: Mapped[str] = db.mapped_column()
@@ -82,7 +92,7 @@ class TaskDescription(db.Model):
 
 @event.listens_for(TaskDescription, "before_insert")
 @event.listens_for(TaskDescription, "before_update")
-def reset_subject(mapper,connection, target):
+def reset_subject(mapper, connection, target):
     """
     Keep inner and outer definition of user_subject in sync. this is called by sqlalchemy
     """

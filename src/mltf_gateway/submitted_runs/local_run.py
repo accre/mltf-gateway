@@ -4,11 +4,12 @@ import copy
 from mlflow.projects.submitted_run import LocalSubmittedRun as BaseLocalSubmittedRun
 
 CACHED_COMMAND_PROC = {}
+
+
 class LocalSubmittedRun(BaseLocalSubmittedRun):
     """
     SERVER-SIDE: Stores information about a Run being executed via Popen
     """
-
 
     # Popen objs cannot be pickled, add this dunder method to delete the object
     # Maybe in the future it can be re-hydrated into a different object?
@@ -25,7 +26,7 @@ class LocalSubmittedRun(BaseLocalSubmittedRun):
 
     def __setstate__(self, state):
         """This will only work in the dumbest cases because WSGI is req-per-process. You'll
-           have to get lucky"""
+        have to get lucky"""
         global CACHED_COMMAND_PROC
         pid = state["command_pid"]
         if pid in CACHED_COMMAND_PROC:

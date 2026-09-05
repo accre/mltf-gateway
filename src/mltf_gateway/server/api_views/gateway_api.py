@@ -77,7 +77,9 @@ def list_jobs():
 def show_job(job_id):
     executor = current_app.extensions["mltf_gateway"]
     show_logs = request.args.get("show_logs", "false").lower() == "true"
-    details = executor.show_details(job_id, show_logs=show_logs, user_subject=g.user["sub"])
+    details = executor.show_details(
+        job_id, show_logs=show_logs, user_subject=g.user["sub"]
+    )
     if isinstance(details, tuple) and len(details) == 2:
         response, status_code = details
         return jsonify(response), status_code

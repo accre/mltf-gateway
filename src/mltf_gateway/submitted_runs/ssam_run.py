@@ -233,5 +233,5 @@ class SSAMSubmittedRun:
 
     def from_dict(cls, input):
         input = input.copy()
-        input['_status_lock'] = RLock()
-        return type(SSAMSubmittedRun, (object, ), input)
+        input["_status_lock"] = RLock()
+        return type(SSAMSubmittedRun, (object,), input)
