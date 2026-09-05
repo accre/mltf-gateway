@@ -12,7 +12,7 @@ from mltf_gateway.gateway_server import (
     MovableFileReference,
     SLURMExecutor,
 )
-from mltf_gateway.submitted_runs.server_run import (
+from mltf_gateway.submitted_runs.server_task import (
     TaskDescription,
 )
 from tests.common_test_base import MockedGatewayTestBase

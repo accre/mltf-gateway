@@ -16,7 +16,7 @@ from mltf_gateway.executors.local_executor import LocalExecutor
 from mltf_gateway.executors.slurm_executor import SLURMExecutor
 from mltf_gateway.executors.ssam_executor import SSAMExecutor
 from mltf_gateway.server.extensions import db
-from mltf_gateway.submitted_runs.server_run import (
+from mltf_gateway.submitted_runs.server_task import (
     TaskDescription,
 )
 from mltf_gateway.utils import get_tracking_uri

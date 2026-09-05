@@ -16,8 +16,6 @@ class Director(db.Model):
     name: Mapped[str] = db.mapped_column(nullable=False, unique=True)
     run_desc: Mapped[GatewayRunDescription] = db.mapped_column(TextPickleType())
 
-
-
 class TaskDescription(db.Model):
     """
     Stores information about a Run submitted to an executor.
@@ -86,6 +84,6 @@ class TaskDescription(db.Model):
 @event.listens_for(TaskDescription, "before_update")
 def reset_subject(mapper,connection, target):
     """
-    Keep inner and outer definition of user_subject in sync
+    Keep inner and outer definition of user_subject in sync. this is called by sqlalchemy
     """
     target.user_subject = target.run_desc.user_subject
