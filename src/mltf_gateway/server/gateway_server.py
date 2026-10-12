@@ -101,11 +101,12 @@ class GatewayServer:
         :param user_subject: subject of the user doing the querying
         :return: list of GatewaySubmittedRun
         """
-        # FIXME support filtering jobs based on list_all param
         ret = []
         runs = db.select(TaskDescription).where(
             TaskDescription.user_subject == user_subject
         )
+        if not list_all:
+            runs = runs.where(TaskDescription.status != "CANCELLED")
 
         for r in db.session.scalars(runs):
             ret.append(r.to_client_json())
@@ -166,17 +167,21 @@ class GatewayServer:
         """Get details of a run."""
         run_ref = RunReference(run_id)
         try:
-            submitted_run = self.reference_to_run(run_ref).submitted_run
+            run = self.reference_to_run(run_ref)
         except IndexError:
             return {"error": f"Run with ID '{run_id}' not found."}, 404
 
+        submitted_run = run.submitted_run
         if hasattr(submitted_run, "get_run_details"):
-            return submitted_run.get_run_details(show_logs)
+            details = submitted_run.get_run_details(show_logs)
         else:
             # Fallback for other run types
             status = submitted_run.get_status()
+            details = {"status": status}
 
-            return {"status": status}
+        if isinstance(details, dict):
+            details["name"] = run.name
+        return details
 
     def delete(self, run_id: str, user_subject):
         """Delete a run."""
@@ -187,7 +192,7 @@ class GatewayServer:
             return {"error": f"Run with ID '{run_id}' not found."}, 404
         run_to_delete.raise_can_write(user_subject)
         run_to_delete.submitted_run.cancel()
-        db.session.delete(run_to_delete)
+        run_to_delete.status = "CANCELLED"
         db.session.commit()
 
         return {"run_id": run_id, "message": "Job deleted successfully"}
@@ -203,6 +208,7 @@ class GatewayServer:
         experiment_id,
         user_subj,
         runtime_token,
+        name="",
     ):
         """
         Takes the user request, then submits to a job backend on their behalf (either local or SLURM)
@@ -215,6 +221,7 @@ class GatewayServer:
         :param experiment_id: What experiment to group this run under (from client if provided)
         :param user_subj: Subject of the user submitting task (string) (from REST layer)
         :param runtime_token: Token to be passed to the job during execution (string)
+        :param name: Optional user-provided display name for the task (string)
         :return: A SubmittedRun describing the asynchronously-running task
         """
         if tracking_uri.startswith("file:"):
@@ -230,6 +237,7 @@ class GatewayServer:
             tracking_uri,
             experiment_id,
             user_subj,
+            name,
         )
 
         # FIXME generate command line and environment source script and pass here
@@ -243,6 +251,7 @@ class GatewayServer:
         gateway_id = str(uuid.uuid1())
         async_req = self.executor.run_context_async(exec_context, run_desc, gateway_id)
         run = TaskDescription(run_desc, async_req, gateway_id)
+        run.status = "SCHEDULED"
         db.session.add(run)
         db.session.commit()
         return run

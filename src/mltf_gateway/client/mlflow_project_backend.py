@@ -14,7 +14,7 @@ from mlflow.projects.utils import (
     fetch_and_validate_project,
     get_or_create_run,
 )
-from mlflow.utils.mlflow_tags import MLFLOW_USER
+from mlflow.utils.mlflow_tags import MLFLOW_RUN_NAME, MLFLOW_USER
 
 from mltf_gateway.client.backend_adapter import RESTAdapter
 from mltf_gateway.client.project_packer import prepare_tarball, produce_tarball
@@ -25,6 +25,10 @@ from .oauth import get_access_token
 logger = logging.getLogger(__name__)
 
 
+def gateway_uri():
+    return os.environ.get("MLTF_GATEWAY_URI", "https://gw.mltf.vu")
+
+
 def adapter_factory() -> RESTAdapter:
     """
     Different "adapters" let the client connect to either a local or remote gateway.
@@ -32,13 +36,14 @@ def adapter_factory() -> RESTAdapter:
     :return: Instance of AbstractBackend the client should use
     """
     load_dotenv()
-    gateway_uri = os.environ.get("MLTF_GATEWAY_URI", "https://gw.mltf.vu")
-    return RESTAdapter(gateway_uri=gateway_uri)
+    return RESTAdapter(gateway_uri=gateway_uri())
+
 
 def trap_common_api_errors(f):
     """
     Make it so raw urllib/requests/etc errors don't throw stacktrace
     """
+
     @wraps(f)
     def wrapper(*args, **kwargs):
         try:
@@ -48,8 +53,10 @@ def trap_common_api_errors(f):
             sys.exit(1)
         except Exception as e:
             print("Unknown error was received. Please report this")
-            print("  error: {e}")
+            print(f"  error: {e}")
+
     return wrapper
+
 
 class GatewayProjectBackend(AbstractBackend):
     """
@@ -83,6 +90,7 @@ class GatewayProjectBackend(AbstractBackend):
         backend_config,
         tracking_uri,
         experiment_id,
+        name=None,
     ):
         if tracking_uri.startswith("file://"):
             logger.warning("""Tracking URI was not set""")
@@ -122,6 +130,10 @@ class GatewayProjectBackend(AbstractBackend):
         tracking.MlflowClient().set_tag(
             mlflow_run_obj.info.run_id, MLFLOW_USER, decoded["preferred_username"]
         )
+        if name:
+            tracking.MlflowClient().set_tag(
+                mlflow_run_obj.info.run_id, MLFLOW_RUN_NAME, name
+            )
         mlflow_run = mlflow_run_obj.info.run_id
 
         logger.info(f"Bundling user environment at {work_dir}")
@@ -146,6 +158,7 @@ class GatewayProjectBackend(AbstractBackend):
                 backend_config,
                 tracking_uri,
                 experiment_id,
+                name or "",
             )
             logger.info(f"Execution enqueued: {ret}")
             print(

@@ -62,7 +62,9 @@ class RunReference:
 @dataclass
 class GatewayRunDescription:
     """
-    Wraps values passed in from mlflow directly, except user_subject which we add from the HTTP layer to identify users
+    Wraps values passed in from mlflow directly, except user_subject which we add from the HTTP layer to identify
+    users, and the optional user-provided name for the task.
+    The plain "" default (vs. mapped_column) keeps old pickled records safe: they fall back to this class attribute.
     """
 
     run_id: Mapped[str] = db.mapped_column()
@@ -73,3 +75,4 @@ class GatewayRunDescription:
     tracking_uri: Mapped[str] = db.mapped_column()
     experiment_id: Mapped[str] = db.mapped_column()
     user_subject: Mapped[str] = db.mapped_column()
+    name: Mapped[str] = ""

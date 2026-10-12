@@ -34,6 +34,7 @@ def submit():
         - backend_config: JSON string of backend configuration
         - tracking_uri: The MLflow tracking URI
         - experiment_id: The MLflow experiment ID
+        - name: (optional) user-provided display name for the job
     Returns:
         JSON response with job reference details
     """
@@ -44,6 +45,7 @@ def submit():
     backend_config = json.loads(request.form["backend_config"])
     tracking_uri = request.form["tracking_uri"]
     experiment_id = request.form["experiment_id"]
+    name = request.form.get("name", "")
     user_subj = g.user["sub"]
     runtime_token = g.user["runtime_token"]
 
@@ -60,6 +62,7 @@ def submit():
             experiment_id=experiment_id,
             user_subj=user_subj,
             runtime_token=runtime_token,
+            name=name,
         )
         return jsonify(run_reference.__dict__)
 

@@ -47,17 +47,17 @@ To demonstrate the gateway, we set up an example "Hello World" project in the `d
 submit a job, enter the `demo/with-gpu` subdirectory and execute `mltf submit` which should output something similar to
 
 ```
-$ mltf submit
+$ mltf submit --name "hello-world"
 Find your MLFlow run at https://mlflow-test.mltf.k8s.accre.vanderbilt.edu/#/experiments/0/runs/1d0c653826144357aa90a7de2c6f6bf8
 Submitted project to MLTF: 962e168e-a61c-11f0-b4b0-bc2411853964
 ```
 
-You can list your tasks with `mltf list`
+You can list your tasks with `mltf list`. Tasks given a name with `--name` display it alongside their ID.
 
 ```
 $ mltf list
 Tasks:
-  2025-10-10@16:03:35 - 962e168e-a61c-11f0-b4b0-bc2411853964
+  2025-10-10@16:03:35 - 962e168e-a61c-11f0-b4b0-bc2411853964 (hello-world)
 ```
 
 And check their status with `mltf show <task_id>`. If wanted, logs can be viewed with `--show-logs`.

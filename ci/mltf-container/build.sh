@@ -52,7 +52,7 @@ BUILDKIT_CMD=$(get_buildkit_cmd)
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 ROOT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && cd ../.. && pwd )
 
-echo "INFO: Will build using ${X}"
-echo "INFO: Build root is $ROOT_DIR"
+2>&1 echo "INFO: Will build using ${X}"
+2>&1 echo "INFO: Build root is $ROOT_DIR"
 
 ${BUILDKIT_CMD} build ${ROOT_DIR} -f ${SCRIPT_DIR}/Dockerfile ${MULTIARCH} ${CLEAN} -t ${TAG}

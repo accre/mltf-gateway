@@ -15,14 +15,6 @@ from mltf_gateway.data_classes import GatewayRunDescription
 from mltf_gateway.server.utils import TextPickleType
 
 
-class Director(db.Model):
-    __tablename__ = "directors2"
-
-    id: Mapped[int] = db.mapped_column(primary_key=True, init=False)
-    name: Mapped[str] = db.mapped_column(nullable=False, unique=True)
-    run_desc: Mapped[GatewayRunDescription] = db.mapped_column(TextPickleType())
-
-
 class TaskDescription(db.Model):
     """
     Stores information about a Run submitted to an executor.
@@ -31,7 +23,7 @@ class TaskDescription(db.Model):
     submitted_run: handle pointing to the actual execution (e.g. SLURM job)
     """
 
-    __tablename__ = "test5"
+    __tablename__ = "runs"
 
     db_idx: Mapped[int] = db.mapped_column(
         primary_key=True, init=False, autoincrement=True, nullable=False
@@ -41,10 +33,21 @@ class TaskDescription(db.Model):
     gateway_id: Mapped[str] = db.mapped_column()
     creation_time: Mapped[int] = db.mapped_column(init=False)
     user_subject: Mapped[str] = db.mapped_column(init=False)
+    status: Mapped[str] = db.mapped_column(default="SCHEDULED")
 
     def __post_init__(self):
         self.creation_time = int(time.time())
         self.user_subject = self.run_desc.user_subject
+
+    @property
+    def name(self) -> str:
+        """
+        User-provided display name for this task (optional).
+        Records pickled before the name field existed lack it in their __dict__,
+        so guard with getattr + type check and fall back to "".
+        """
+        task_name = getattr(self.run_desc, "name", "")
+        return task_name if isinstance(task_name, str) else ""
 
     def to_client_json(self):
         """
@@ -55,8 +58,25 @@ class TaskDescription(db.Model):
         return {
             "run_id": self.run_desc.run_id,
             "gateway_id": self.gateway_id,
+            "name": self.name,
             "creation_time": self.creation_time,
         }
+
+    def update_status_from_submitted_run(self):
+        """
+        Update the status field from the submitted_run's status
+        """
+        if hasattr(self.submitted_run, "get_status"):
+            try:
+                run_status = self.submitted_run.get_status()
+                if isinstance(run_status, str):
+                    self.status = run_status
+                else:
+                    from mlflow.entities import RunStatus
+
+                    self.status = RunStatus.to_string(run_status)
+            except Exception:
+                pass
 
     def wait(self):
         return self.submitted_run.wait()

@@ -5,4 +5,4 @@
 #
 
 source /mltf/venv/bin/activate
-flask --app mlflow_mltf_gateway.flaskapp.gateway run --debug
+mltf server --debug

@@ -108,6 +108,7 @@ class RESTAdapter:
         backend_config,
         tracking_uri,
         experiment_id,
+        name="",
     ):
         job_url = "api/job"
         files = {"tarball": open(project_tarball, "rb")}
@@ -119,6 +120,7 @@ class RESTAdapter:
             "backend_config": json.dumps(backend_config),
             "tracking_uri": tracking_uri,
             "experiment_id": experiment_id,
+            "name": name,
         }
         headers = {}
         if self.token:

@@ -1,63 +1,79 @@
 import unittest
 import sys
 
-import mltf_gateway.gateway_server
+import mltf_gateway.server.gateway_server
 from mltf_gateway.executors.base import get_script
-from tests.common_test_base import MockedGatewayTestBase
+from tests.common_test_base import MockedGatewayTestBase, container_engine_available
 
-GatewayServer = mltf_gateway.gateway_server.GatewayServer
+GatewayServer = mltf_gateway.server.gateway_server.GatewayServer
 
 
 class IntegrationTest(MockedGatewayTestBase):
 
+    @unittest.skipUnless(
+        container_engine_available(),
+        "Requires a running containerization engine (docker/nerdctl/singularity/apptainer)",
+    )
     def test_submit_and_show(self):
-        srv = GatewayServer(executor_name='local', inside_script="test/inside-noop.sh")
+        srv = GatewayServer(executor_name="local", inside_script="test/inside-noop.sh")
         tarball = get_script("mltf-hello-world.tar.gz")
-        run = srv.enqueue_run("", tarball, "", {}, {}, self.tracking_uri, "", "FAKE-USER", "FAKE-TOKEN")
+        run = srv.enqueue_run(
+            "", tarball, "", {}, {}, self.tracking_uri, "", "FAKE-USER", "FAKE-TOKEN"
+        )
         run.wait()
         print(run)
         all_runs = srv.list(list_all=False, user_subject="FAKE-USER")
-        assert (len(all_runs) > 0)
+        assert len(all_runs) > 0
         other_user_runs = srv.list(list_all=False, user_subject="ANOTHER-FAKE-USER")
-        assert (len(other_user_runs) == 0)
-        run_inf = srv.show_details(run.gateway_id, show_logs=True)
-        assert (run_inf)
-        assert (len(run_inf['logs']) > 0)
+        assert len(other_user_runs) == 0
+        run_inf = srv.show_details(
+            run.gateway_id, user_subject="FAKE-USER", show_logs=True
+        )
+        assert run_inf
+        assert len(run_inf["logs"]) > 0
 
     def test_submit_and_show_bare(self):
-        self.setEnv('MLTF_DEBUG_NO_CONTAINER', 'true')
-        srv = GatewayServer(executor_name='local', inside_script="test/inside-dump.py")
+        self.setEnv("MLTF_DEBUG_NO_CONTAINER", "true")
+        srv = GatewayServer(executor_name="local", inside_script="test/inside-dump.py")
         tarball = get_script("mltf-hello-world.tar.gz")
-        run = srv.enqueue_run("", tarball, "", {}, {}, self.tracking_uri, "", "FAKE-USER", "FAKE-TOKEN")
+        run = srv.enqueue_run(
+            "", tarball, "", {}, {}, self.tracking_uri, "", "FAKE-USER", "FAKE-TOKEN"
+        )
         run.wait()
         print(run)
         all_runs = srv.list(list_all=False, user_subject="FAKE-USER")
-        assert (len(all_runs) > 0)
+        assert len(all_runs) > 0
         other_user_runs = srv.list(list_all=False, user_subject="ANOTHER-FAKE-USER")
-        assert (len(other_user_runs) == 0)
-        run_inf = srv.show_details(run.gateway_id, show_logs=True)
-        assert (run_inf)
-        assert (run_inf['status'] == "FINISHED")
-        assert (len(run_inf['logs']) > 0)
-        print(run_inf['logs'])
+        assert len(other_user_runs) == 0
+        run_inf = srv.show_details(
+            run.gateway_id, user_subject="FAKE-USER", show_logs=True
+        )
+        assert run_inf
+        assert run_inf["status"] == "FINISHED"
+        assert len(run_inf["logs"]) > 0
+        print(run_inf["logs"])
 
     def test_submit_and_fail(self):
-        self.setEnv('MLTF_DEBUG_NO_CONTAINER', 'true')
-        srv = GatewayServer(executor_name='local', inside_script="test/inside-fail.py")
+        self.setEnv("MLTF_DEBUG_NO_CONTAINER", "true")
+        srv = GatewayServer(executor_name="local", inside_script="test/inside-fail.py")
         tarball = get_script("mltf-hello-world.tar.gz")
-        run = srv.enqueue_run("", tarball, "", {}, {}, self.tracking_uri, "", "FAKE-USER", "FAKE-TOKEN")
+        run = srv.enqueue_run(
+            "", tarball, "", {}, {}, self.tracking_uri, "", "FAKE-USER", "FAKE-TOKEN"
+        )
         run.wait()
         print(run)
         all_runs = srv.list(list_all=False, user_subject="FAKE-USER")
-        assert (len(all_runs) > 0)
+        assert len(all_runs) > 0
         other_user_runs = srv.list(list_all=False, user_subject="ANOTHER-FAKE-USER")
-        assert (len(other_user_runs) == 0)
-        run_inf = srv.show_details(run.gateway_id, show_logs=True)
-        assert (run_inf)
-        assert (run_inf['status'] == "FAILED")
-        assert (len(run_inf['logs']) > 0)
-        print(run_inf['logs'])
+        assert len(other_user_runs) == 0
+        run_inf = srv.show_details(
+            run.gateway_id, user_subject="FAKE-USER", show_logs=True
+        )
+        assert run_inf
+        assert run_inf["status"] == "FAILED"
+        assert len(run_inf["logs"]) > 0
+        print(run_inf["logs"])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

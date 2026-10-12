@@ -108,3 +108,20 @@ exclude_lines = [
   "if __name__ == .__main__.:",
   "if TYPE_CHECKING:",
 ]
+
+[tool.tbump]
+version_field = "src/mltf_gateway/__about__.py:__version__"
+url = "https://github.com/accre/mltf-gateway"
+
+[[tool.tbump.hooks]]
+type = "shell"
+pre_update = [
+  "rm -f src/instance/mltf_gateway.db",
+]
+
+[[tool.tbump.hooks]]
+type = "shell"
+post_update = [
+  "source venv/bin/activate && alembic revision --autogenerate -m \"Update database schema for version {{new_version}}\"",
+  "alembic upgrade head",
+]
