@@ -61,15 +61,11 @@ class ConfigEndpointTestCase(BasicAPITestCase):
         self.assertEqual(conf["oauth_issuer"], expected_issuer)
 
         # Verify well_known_url is derived from issuer
-        expected_well_known = (
-            "https://keycloak.example.com/realms/test-realm/.well-known/openid-configuration"
-        )
+        expected_well_known = "https://keycloak.example.com/realms/test-realm/.well-known/openid-configuration"
         self.assertEqual(conf["well_known_url"], expected_well_known)
 
         # Verify device_authorization_endpoint is derived from issuer
-        expected_device_endpoint = (
-            "https://keycloak.example.com/realms/test-realm/protocol/openid-connect/device"
-        )
+        expected_device_endpoint = "https://keycloak.example.com/realms/test-realm/protocol/openid-connect/device"
         self.assertEqual(
             conf["device_authorization_endpoint"], expected_device_endpoint
         )
