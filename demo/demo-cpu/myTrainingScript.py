@@ -15,8 +15,9 @@ if __name__ == "__main__":
     mlflow.log_artifact(__file__)
     print("The sum of the array is:", numpy.sum(a))
     import os, pprint, copy
+
     env_copy = copy.deepcopy(os.environ)
-    del env_copy['MLFLOW_TRACKING_TOKEN']
+    del env_copy["MLFLOW_TRACKING_TOKEN"]
     print(env_copy)
     print("Exiting now.")
     exit(0)

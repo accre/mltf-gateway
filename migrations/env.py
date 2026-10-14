@@ -22,28 +22,30 @@ logger = logging.getLogger("alembic.env")
 def get_engine():
     """Get the database engine from Flask app"""
     import sys
-    
+
     # Add src to path
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
-    
+
     from flask import Flask
     from mltf_gateway.server.app import create_app
-    
+
     app = create_app()
-    
+
     with app.app_context():
         from mltf_gateway.server.extensions import db
+
         return db.engine
 
 
 def get_target_metadata():
     """Get the target metadata for autogenerate"""
     import sys
-    
+
     # Add src to path
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
-    
+
     from mltf_gateway.server.extensions import db
+
     return db.metadata
 
 
@@ -63,7 +65,7 @@ def run_migrations_offline() -> None:
     if not url or url == "driver://user:pass@localhost/dbname":
         # Use environment variable if default value
         url = os.environ.get("SQLALCHEMY_DATABASE_URI", "sqlite:///mltf_gateway.db")
-    
+
     context.configure(
         url=url,
         target_metadata=get_target_metadata(),
@@ -86,9 +88,9 @@ def run_migrations_online() -> None:
 
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, 
+            connection=connection,
             target_metadata=get_target_metadata(),
-            render_as_batch=True  # For SQLite support
+            render_as_batch=True,  # For SQLite support
         )
 
         with context.begin_transaction():
@@ -99,4 +101,3 @@ if context.is_offline_mode():
     run_migrations_offline()
 else:
     run_migrations_online()
-
