@@ -75,3 +75,31 @@ Status: RUNNING
 Finally, any output artifacts, parameters or logs will be uploaded to the tracking server which can be accessed
 from the URL provided above (future improvements will add CLI access to artifacts). The tracking API is
 described [here](https://mlflow.org/docs/latest/ml/tracking/tracking-api/) and will let you upload arbitrary metrics (e.g. loss) and artifacts (e.g. output files)
+
+## Releasing
+
+To make a new revision of the package:
+
+```bash
+# 1. Bump the version number (updates __about__.py and tbump.toml, commits, tags)
+tbump --yes <new_version>
+
+# 2. Build the package
+rm -rf dist/ build/
+python -m build
+
+# 3. Upload to PyPI (requires TWINE_USERNAME/TWINE_PASSWORD or ~/.pypirc)
+python -m twine upload dist/*
+```
+
+To publish to TestPyPI instead:
+
+```bash
+python -m twine upload --repository testpypi dist/*
+```
+
+Ensure all tests pass before releasing:
+
+```bash
+python -m pytest tests/
+```
