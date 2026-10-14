@@ -25,30 +25,32 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
 ]
-# Beats me how to break this into a dev-only depenendancy list
 dependencies = [
     "PyJWT",
-    "black",
+    "argon2_cffi",
     "cryptography",
     "flask",
     "flask-login",
     "flask-sqlalchemy",
     "gunicorn",
+    "jaraco.classes",
     "jinja2",
     "jsonpickle",
     "keyring>=20.0.0",
     "mlflow-skinny",
-    "pytest",
-    "pytest-mock",
+    "pycryptodome",
     "python-dotenv",
     "requests",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black",
+    "pytest",
+    "pytest-mock",
     "requests-mock",
     "tbump",
-    # Needed for the keyrings.cryptfile package
-    "argon2_cffi",
-    "jaraco.classes",
-    "pycryptodome",
-  ]
+]
 
 [project.urls]
 Documentation = "https://github.com/accre/mltf-gateway#readme"
