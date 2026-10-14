@@ -7,6 +7,12 @@ import shlex
 from typing import Tuple, List
 
 DEFAULT_TRACKING_SERVER = "https://mlflow.mltf.vu"
+DEFAULT_GATEWAY_URI = "https://gw.mltf.vu"
+
+
+def gateway_uri() -> str:
+    """Get the gateway URI from environment or use default."""
+    return os.environ.get("MLTF_GATEWAY_URI", DEFAULT_GATEWAY_URI)
 
 
 def get_tracking_uri() -> str:

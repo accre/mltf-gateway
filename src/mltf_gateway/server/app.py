@@ -58,6 +58,8 @@ def init_routes(app):
         conf = {
             "oauth_config": oauth2_config,
             "oauth_issuer": constants.ISSUER,
+            "well_known_url": f"{constants.ISSUER}/.well-known/openid-configuration",
+            "device_authorization_endpoint": f"{constants.BASE_URL}/device",
         }
         return jsonify(conf), 200
 

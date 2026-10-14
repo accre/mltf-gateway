@@ -19,14 +19,10 @@ from mlflow.utils.mlflow_tags import MLFLOW_RUN_NAME, MLFLOW_USER
 from mltf_gateway.client.backend_adapter import RESTAdapter
 from mltf_gateway.client.project_packer import prepare_tarball, produce_tarball
 from mltf_gateway.submitted_runs.client_run import ClientSideSubmittedRun
-from mltf_gateway.utils import get_tracking_uri
+from mltf_gateway.utils import get_tracking_uri, gateway_uri, gateway_uri
 from .oauth import get_access_token
 
 logger = logging.getLogger(__name__)
-
-
-def gateway_uri():
-    return os.environ.get("MLTF_GATEWAY_URI", "https://gw.mltf.vu")
 
 
 def adapter_factory() -> RESTAdapter:

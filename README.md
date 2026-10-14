@@ -27,6 +27,8 @@ mltf login
 This will prompt you to visit a webpage, login using either CERN or Vanderbilt credentials, and copy a code from your
 terminal into the resulting page. You can verify things worked correctly with `mltf auth-status`
 
+**Note:** Auth endpoints are now resolved automatically from the gateway via OIDC discovery. The only required setting is `MLTF_GATEWAY_URI`. Optional environment variable overrides remain available: `MLTF_CLIENT_ID`, `MLTF_AUTH_URL`, `MLTF_TOKEN_URL`, `MLTF_SCOPES`.
+
 ```
 $ mltf auth-status
 Credentials found, expired? False
@@ -41,6 +43,9 @@ Refresh Token:
    Expires: 2025-10-26 20:56:06+00:00
  Remaining: 16 days, 1:16:29.941754
 ```
+
+**Note:** Auth endpoints are now resolved automatically from the gateway. `MLTF_GATEWAY_URI` is the only required setting; 
+`MLTF_CLIENT_ID`, `MLTF_AUTH_URL`, `MLTF_TOKEN_URL`, and `MLTF_SCOPES` are optional overrides.
 
 ## Quickstart
 To demonstrate the gateway, we set up an example "Hello World" project in the `demo/with-gpu` subdirectory of this repository. To

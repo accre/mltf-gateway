@@ -5,12 +5,16 @@ This module provides OAuth2 authentication capabilities for the CLI client,
 including device flow authentication and token management.
 """
 
+import json
+import logging
 import os
 import time
 import webbrowser
 from typing import Optional, Dict, Any
 
 import requests
+
+logger = logging.getLogger(__name__)
 
 # Configuration - These should be configurable via environment variables or config file
 CLIENT_ID = os.environ.get("MLTF_CLIENT_ID", "mlflow")
@@ -22,7 +26,11 @@ TOKEN_ENDPOINT = os.environ.get(
     "MLTF_TOKEN_URL",
     "https://keycloak.k8s.accre.vanderbilt.edu/realms/mltf-dual-login/protocol/openid-connect/token",
 )
-SCOPES = os.environ.get("MLTF_SCOPES", "read write").split()
+SCOPES = os.environ.get("MLTF_SCOPES", "openid email profile").split()
+DEVICE_AUTHORIZATION_ENDPOINT = os.environ.get(
+    "MLTF_DEVICE_AUTHORIZATION_ENDPOINT",
+    "https://keycloak.k8s.accre.vanderbilt.edu/realms/mltf-dual-login/protocol/openid-connect/device/auth",
+)
 
 # Used to keep user from having to type a password with each CLI call
 if "MLTF_KEYRING_PASSWORD" in os.environ:
@@ -34,6 +42,156 @@ if "DBUS_SESSION_BUS_ADDRESS" in os.environ:
 import keyring
 
 DID_WARN_KEYRING = False
+
+# Cache for gateway config and OIDC discovery
+_gateway_config_cache = None
+_gateway_config_cache_time = 0
+_oidc_config_cache = {}
+_oidc_config_cache_time = {}
+
+# Cache TTL (1 hour by default)
+AUTH_CONFIG_TTL = int(os.environ.get("MLTF_AUTH_CONFIG_TTL", 3600))
+
+
+def get_gateway_config(gateway_uri):
+    """Fetch gateway config and extract OIDC information."""
+    global _gateway_config_cache, _gateway_config_cache_time
+    
+    # Check cache
+    now = time.time()
+    if _gateway_config_cache and (now - _gateway_config_cache_time) < AUTH_CONFIG_TTL:
+        return _gateway_config_cache
+    
+    try:
+        response = requests.get(f"{gateway_uri}/api/config", timeout=5)
+        response.raise_for_status()
+        config = response.json()
+        _gateway_config_cache = config
+        _gateway_config_cache_time = now
+        return config
+    except Exception as e:
+        print(f"Warning: Failed to fetch gateway config: {e}")
+        print("  Falling back to environment variables or defaults.")
+        return None
+
+
+def get_oidc_config(gateway_uri):
+    """Fetch OIDC discovery document and resolve endpoints."""
+    global _oidc_config_cache, _oidc_config_cache_time
+    
+    now = time.time()
+    
+    # Check if we have a cached discovery document
+    if gateway_uri in _oidc_config_cache and (now - _oidc_config_cache_time[gateway_uri]) < AUTH_CONFIG_TTL:
+        return _oidc_config_cache[gateway_uri]
+    
+    try:
+        gw_config = get_gateway_config(gateway_uri)
+        if gw_config:
+            # Use server-provided OIDC config if available
+            oidc_config = gw_config.get("oauth_config", {})
+            
+            # Normalize field names: gateway config uses *_url, OIDC uses *_endpoint
+            if "token_url" in oidc_config and "token_endpoint" not in oidc_config:
+                oidc_config["token_endpoint"] = oidc_config["token_url"]
+            if "authorize_url" in oidc_config and "authorization_endpoint" not in oidc_config:
+                oidc_config["authorization_endpoint"] = oidc_config["authorize_url"]
+            
+            if "issuer" in oidc_config:
+                # Try OIDC discovery
+                discovery_url = f"{oidc_config['issuer']}/.well-known/openid-configuration"
+                try:
+                    response = requests.get(discovery_url, timeout=5)
+                    response.raise_for_status()
+                    discovered = response.json()
+                    
+                    # Build OIDC config from discovery document
+                    oidc_config = {
+                        "issuer": discovered["issuer"],
+                        "authorization_endpoint": discovered["authorization_endpoint"],
+                        "token_endpoint": discovered["token_endpoint"],
+                        "device_authorization_endpoint": discovered.get("device_authorization_endpoint"),
+                    }
+                except Exception as e:
+                    print(f"Warning: OIDC discovery failed: {e}")
+                    print("  Using server-provided endpoints from gateway config.")
+            
+            # Use server-provided endpoints if available
+            if "device_authorization_endpoint" in gw_config:
+                oidc_config["device_authorization_endpoint"] = gw_config["device_authorization_endpoint"]
+            if "well_known_url" in gw_config:
+                oidc_config["well_known_url"] = gw_config["well_known_url"]
+            
+            # Cache the resolved config
+            _oidc_config_cache[gateway_uri] = oidc_config
+            _oidc_config_cache_time[gateway_uri] = now
+            return oidc_config
+        else:
+            # Gateway unreachable, return None to use defaults
+            return None
+            
+    except Exception as e:
+        print(f"Warning: Failed to discover OIDC config: {e}")
+        print("  Falling back to environment variables or defaults.")
+    return None
+
+
+def resolve_auth_config():
+    """Resolve all auth configuration values."""
+    from mltf_gateway.utils import gateway_uri
+
+    gw_uri = gateway_uri()
+    oidc_config = get_oidc_config(gw_uri)
+    if oidc_config is None:
+        oidc_config = {}
+
+    # Parameter resolution order: env override > discovery > defaults
+    if os.environ.get("MLTF_AUTH_URL"):
+        auth_endpoint = os.environ["MLTF_AUTH_URL"]
+    elif oidc_config.get("device_authorization_endpoint"):
+        auth_endpoint = oidc_config["device_authorization_endpoint"]
+    elif oidc_config.get("authorization_endpoint"):
+        # Derive device endpoint from auth endpoint
+        auth_endpoint = oidc_config["authorization_endpoint"].replace(
+            "/authorize", "/device/auth"
+        )
+    else:
+        auth_endpoint = AUTHORIZATION_ENDPOINT
+
+    if os.environ.get("MLTF_TOKEN_URL"):
+        token_endpoint = os.environ["MLTF_TOKEN_URL"]
+    elif oidc_config.get("token_endpoint"):
+        token_endpoint = oidc_config["token_endpoint"]
+    else:
+        token_endpoint = TOKEN_ENDPOINT
+
+    if os.environ.get("MLTF_CLIENT_ID"):
+        client_id = os.environ["MLTF_CLIENT_ID"]
+    else:
+        # Try to get client_id from server config
+        gw_config = get_gateway_config(gw_uri)
+        if gw_config and gw_config.get("oauth_config"):
+            client_id = gw_config["oauth_config"].get("client_id", CLIENT_ID)
+        else:
+            client_id = CLIENT_ID
+
+    if os.environ.get("MLTF_SCOPES"):
+        scopes = os.environ["MLTF_SCOPES"].split()
+    else:
+        # Try to get scopes from server config
+        gw_config = get_gateway_config(gw_uri)
+        if gw_config and gw_config.get("oauth_config"):
+            scopes = gw_config["oauth_config"].get("scopes", SCOPES)
+        else:
+            scopes = SCOPES
+
+    return {
+        "auth_endpoint": auth_endpoint,
+        "token_endpoint": token_endpoint,
+        "client_id": client_id,
+        "scopes": scopes,
+        "issuer": oidc_config.get("issuer"),
+    }
 
 
 def get_stored_credentials() -> Optional[Dict[str, Any]]:
@@ -95,15 +253,24 @@ def clear_stored_credentials():
                 keyring.delete_password("mltf_gateway", p)
     except Exception as e:
         print(f"Error clearing stored credentials: {e}")
+    finally:
+        # Clear auth config caches
+        global _gateway_config_cache, _gateway_config_cache_time
+        global _oidc_config_cache, _oidc_config_cache_time
+        _gateway_config_cache = None
+        _gateway_config_cache_time = 0
+        _oidc_config_cache = {}
+        _oidc_config_cache_time = {}
 
 
 def request_device_code():
     """Request device code from OAuth2 provider"""
-    data = {"client_id": CLIENT_ID, "scope": " ".join(SCOPES)}
+    auth_config = resolve_auth_config()
+
+    data = {"client_id": auth_config["client_id"], "scope": " ".join(auth_config["scopes"])}
 
     try:
-        endpoint_uri = AUTHORIZATION_ENDPOINT.replace("/authorize", "/device/code")
-        response = requests.post(endpoint_uri, data=data)
+        response = requests.post(auth_config["auth_endpoint"], data=data)
         response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException as e:
@@ -113,19 +280,20 @@ def request_device_code():
 
 def poll_token(device_code, interval=0):
     """Poll for access token using device code"""
+    auth_config = resolve_auth_config()
 
     # Wait for 5 seconds to poll tokens
     if not interval:
         interval = os.environ.get("MLTF_TEST_TOKEN_POLL_INTERVAL", 5)
     data = {
-        "client_id": CLIENT_ID,
+        "client_id": auth_config["client_id"],
         "device_code": device_code,
         "grant_type": "urn:ietf:params:oauth:grant-type:device_code",
     }
 
     while True:
         try:
-            response = requests.post(TOKEN_ENDPOINT, data=data)
+            response = requests.post(auth_config["token_endpoint"], data=data)
 
             if response.status_code == 200:
                 ret = response.json()
@@ -157,14 +325,15 @@ def poll_token(device_code, interval=0):
 
 def refresh_access_token(refresh_token):
     """Refresh access token using refresh token"""
+    auth_config = resolve_auth_config()
     data = {
-        "client_id": CLIENT_ID,
+        "client_id": auth_config["client_id"],
         "grant_type": "refresh_token",
         "refresh_token": refresh_token,
     }
 
     try:
-        response = requests.post(TOKEN_ENDPOINT, data=data)
+        response = requests.post(auth_config["token_endpoint"], data=data)
         response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException as e:
