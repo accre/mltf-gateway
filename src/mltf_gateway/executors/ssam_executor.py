@@ -48,7 +48,9 @@ class ReloadableToken:
             self.reload_token()
 
         if self.is_expired():
-            raise ValueError(f"Provided token was expired at startup: Path was (?) {token_path}")
+            raise ValueError(
+                f"Provided token was expired at startup: Path was (?) {token_path}"
+            )
 
     def reload_token(self):
         if not self.token_path:

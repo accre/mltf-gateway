@@ -56,12 +56,12 @@ AUTH_CONFIG_TTL = int(os.environ.get("MLTF_AUTH_CONFIG_TTL", 3600))
 def get_gateway_config(gateway_uri):
     """Fetch gateway config and extract OIDC information."""
     global _gateway_config_cache, _gateway_config_cache_time
-    
+
     # Check cache
     now = time.time()
     if _gateway_config_cache and (now - _gateway_config_cache_time) < AUTH_CONFIG_TTL:
         return _gateway_config_cache
-    
+
     try:
         response = requests.get(f"{gateway_uri}/api/config", timeout=5)
         response.raise_for_status()
@@ -78,50 +78,62 @@ def get_gateway_config(gateway_uri):
 def get_oidc_config(gateway_uri):
     """Fetch OIDC discovery document and resolve endpoints."""
     global _oidc_config_cache, _oidc_config_cache_time
-    
+
     now = time.time()
-    
+
     # Check if we have a cached discovery document
-    if gateway_uri in _oidc_config_cache and (now - _oidc_config_cache_time[gateway_uri]) < AUTH_CONFIG_TTL:
+    if (
+        gateway_uri in _oidc_config_cache
+        and (now - _oidc_config_cache_time[gateway_uri]) < AUTH_CONFIG_TTL
+    ):
         return _oidc_config_cache[gateway_uri]
-    
+
     try:
         gw_config = get_gateway_config(gateway_uri)
         if gw_config:
             # Use server-provided OIDC config if available
             oidc_config = gw_config.get("oauth_config", {})
-            
+
             # Normalize field names: gateway config uses *_url, OIDC uses *_endpoint
             if "token_url" in oidc_config and "token_endpoint" not in oidc_config:
                 oidc_config["token_endpoint"] = oidc_config["token_url"]
-            if "authorize_url" in oidc_config and "authorization_endpoint" not in oidc_config:
+            if (
+                "authorize_url" in oidc_config
+                and "authorization_endpoint" not in oidc_config
+            ):
                 oidc_config["authorization_endpoint"] = oidc_config["authorize_url"]
-            
+
             if "issuer" in oidc_config:
                 # Try OIDC discovery
-                discovery_url = f"{oidc_config['issuer']}/.well-known/openid-configuration"
+                discovery_url = (
+                    f"{oidc_config['issuer']}/.well-known/openid-configuration"
+                )
                 try:
                     response = requests.get(discovery_url, timeout=5)
                     response.raise_for_status()
                     discovered = response.json()
-                    
+
                     # Build OIDC config from discovery document
                     oidc_config = {
                         "issuer": discovered["issuer"],
                         "authorization_endpoint": discovered["authorization_endpoint"],
                         "token_endpoint": discovered["token_endpoint"],
-                        "device_authorization_endpoint": discovered.get("device_authorization_endpoint"),
+                        "device_authorization_endpoint": discovered.get(
+                            "device_authorization_endpoint"
+                        ),
                     }
                 except Exception as e:
                     print(f"Warning: OIDC discovery failed: {e}")
                     print("  Using server-provided endpoints from gateway config.")
-            
+
             # Use server-provided endpoints if available
             if "device_authorization_endpoint" in gw_config:
-                oidc_config["device_authorization_endpoint"] = gw_config["device_authorization_endpoint"]
+                oidc_config["device_authorization_endpoint"] = gw_config[
+                    "device_authorization_endpoint"
+                ]
             if "well_known_url" in gw_config:
                 oidc_config["well_known_url"] = gw_config["well_known_url"]
-            
+
             # Cache the resolved config
             _oidc_config_cache[gateway_uri] = oidc_config
             _oidc_config_cache_time[gateway_uri] = now
@@ -129,7 +141,7 @@ def get_oidc_config(gateway_uri):
         else:
             # Gateway unreachable, return None to use defaults
             return None
-            
+
     except Exception as e:
         print(f"Warning: Failed to discover OIDC config: {e}")
         print("  Falling back to environment variables or defaults.")
@@ -267,7 +279,10 @@ def request_device_code():
     """Request device code from OAuth2 provider"""
     auth_config = resolve_auth_config()
 
-    data = {"client_id": auth_config["client_id"], "scope": " ".join(auth_config["scopes"])}
+    data = {
+        "client_id": auth_config["client_id"],
+        "scope": " ".join(auth_config["scopes"]),
+    }
 
     try:
         response = requests.post(auth_config["auth_endpoint"], data=data)

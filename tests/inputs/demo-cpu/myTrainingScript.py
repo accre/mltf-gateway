@@ -15,6 +15,7 @@ if __name__ == "__main__":
     mlflow.log_artifact(__file__)
     print("The sum of the array is:", numpy.sum(a))
     import os, pprint
+
     print(os.environ)
     print("Exiting now.")
     exit(0)

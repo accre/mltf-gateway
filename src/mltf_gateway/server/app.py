@@ -72,10 +72,10 @@ def create_app():
         app: Flask application instance
     """
     import sys
-    
+
     # Skip init_db if running alembic
     skip_init_db = any("alembic" in arg for arg in sys.argv)
-    
+
     app = Flask(__name__)
     app.register_blueprint(auth_bp, url_prefix="/auth")
     app.register_blueprint(token_bp, url_prefix="/token")
@@ -105,4 +105,3 @@ def create_app():
             init_db()
 
     return app
-

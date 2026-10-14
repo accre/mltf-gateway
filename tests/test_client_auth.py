@@ -59,45 +59,54 @@ class ClientAuthTestCase(unittest.TestCase):
         self.old_keyring = keyring.get_keyring()
         keyring.set_keyring(TestingKeyring())
         mltf_gateway.client.backend_adapter.INPROCESS_GATEWAY_APP = None
-        mltf_gateway.server.gateway_server.RUN_DATABASE = f"{self.tempDir}/gateway_run_db.pkl"
+        mltf_gateway.server.gateway_server.RUN_DATABASE = (
+            f"{self.tempDir}/gateway_run_db.pkl"
+        )
         os.environ["DATABASE_URL"] = f"sqlite:///:memory:"
-        self.tracking_uri = os.environ["MLFLOW_TRACKING_URI"] = f"file://{self.tempDir}/mlflow"
+        self.tracking_uri = os.environ["MLFLOW_TRACKING_URI"] = (
+            f"file://{self.tempDir}/mlflow"
+        )
 
     def testAuthStatus(self, m):
-        assert (keyring.get_password("testpass", "noneuser") == None)
+        assert keyring.get_password("testpass", "noneuser") == None
         oauth_base = "https://localhost:5001/api/mockoauth"
-        
+
         # Mock gateway config endpoint
-        m.get("https://localhost:5000/api/config", json={
-            "oauth_config": {
-                "client_id": "mlflow",
-                "scopes": ["openid", "email", "profile"],
-                "issuer": "https://localhost:5001/realms/test",
-                "token_url": f"{oauth_base}/token"
+        m.get(
+            "https://localhost:5000/api/config",
+            json={
+                "oauth_config": {
+                    "client_id": "mlflow",
+                    "scopes": ["openid", "email", "profile"],
+                    "issuer": "https://localhost:5001/realms/test",
+                    "token_url": f"{oauth_base}/token",
+                },
+                "oauth_issuer": "https://localhost:5001/realms/test",
+                "well_known_url": "https://localhost:5001/realms/test/.well-known/openid-configuration",
+                "device_authorization_endpoint": f"{oauth_base}/auth/device",
             },
-            "oauth_issuer": "https://localhost:5001/realms/test",
-            "well_known_url": "https://localhost:5001/realms/test/.well-known/openid-configuration",
-            "device_authorization_endpoint": f"{oauth_base}/auth/device"
-        })
-        
+        )
+
         # Mock OIDC discovery
-        m.get("https://localhost:5001/realms/test/.well-known/openid-configuration", json={
-            "issuer": "https://localhost:5001/realms/test",
-            "authorization_endpoint": f"{oauth_base}/auth/authorize",
-            "token_endpoint": f"{oauth_base}/token",
-            "device_authorization_endpoint": f"{oauth_base}/auth/device"
-        })
-        
+        m.get(
+            "https://localhost:5001/realms/test/.well-known/openid-configuration",
+            json={
+                "issuer": "https://localhost:5001/realms/test",
+                "authorization_endpoint": f"{oauth_base}/auth/authorize",
+                "token_endpoint": f"{oauth_base}/token",
+                "device_authorization_endpoint": f"{oauth_base}/auth/device",
+            },
+        )
+
         device_return = {
             "device_code": "DEVICECODE123",
             "user_code": "ABCD-1234",
-            "verification_uri": f"{oauth_base}/auth/verify_client"
+            "verification_uri": f"{oauth_base}/auth/verify_client",
         }
         m.register_uri("POST", f"{oauth_base}/auth/device", json=device_return)
-        token_resp = {'access_token': 'TESTACCESSTOKEN',
-                      'expires_in': 3600}
+        token_resp = {"access_token": "TESTACCESSTOKEN", "expires_in": 3600}
         m.register_uri("POST", f"{oauth_base}/token", json=token_resp)
-        
+
         res = oauth_client.get_access_token()
         print(res)
 
