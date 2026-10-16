@@ -34,6 +34,7 @@ class ExecutorBase:
     """
     Base class for executors
     """
+    degraded: bool = False
 
     def run_context_async(self, ctx, run_desc, gateway_id):
         """

@@ -45,12 +45,15 @@ class ReloadableToken:
             raise ValueError("Cannot provide both token and token_path.")
 
         if token_path:
-            self.reload_token()
-
-        if self.is_expired():
-            raise ValueError(
-                f"Provided token was expired at startup: Path was (?) {token_path}"
-            )
+            try:
+                self.reload_token()
+            except Exception as e:
+                logger.warning(f"Could not load token from {token_path}: {e}")
+                self.valid = False
+            else:
+                self.valid = not self.is_expired()
+        else:
+            self.valid = bool(token) and not self.is_expired(token)
 
     def reload_token(self):
         if not self.token_path:
@@ -81,6 +84,7 @@ class ReloadableToken:
 
 
 class ClientRefreshToken:
+    token_path = None
 
     # Not sure if there's a way to sync this with the __init__ argument list?
     @staticmethod
@@ -108,9 +112,11 @@ class ClientRefreshToken:
         self.audience = auth_audience
         self.expiration = -1
         self.token = ""
+        self.valid = False
         if not self.reload_token():
             raise ValueError("Could not receive initial token")
         else:
+            self.valid = not self.is_expired()
             logger.info("Initialized client refresh token")
 
     def reload_token(self) -> bool:
@@ -147,6 +153,7 @@ class ClientRefreshToken:
         token = response["access_token"]
         self.expiration = get_jwt_expiration(token)
         self.token = token
+        self.valid = not self.is_expired()
         return True
 
     def is_expired(self):
@@ -196,6 +203,20 @@ class SSAMExecutor(ExecutorBase):
             slurm_token or os.environ.get("SLURM_TOKEN"),
             slurm_token_path or os.environ.get("SLURM_TOKEN_PATH"),
         )
+
+        auth_has_token = bool(self._auth_token.token or self._auth_token.token_path)
+        slurm_has_token = bool(self._slurm_token.token or self._slurm_token.token_path)
+
+        if auth_has_token and not self._auth_token.valid and not self._auth_token.token_path:
+            raise ValueError("Auth token is invalid and no token path provided")
+        if slurm_has_token and not self._slurm_token.valid and not self._slurm_token.token_path:
+            raise ValueError("Slurm token is invalid and no token path provided")
+
+        if (auth_has_token and not self._auth_token.valid) or (slurm_has_token and not self._slurm_token.valid):
+            self.degraded = True
+            logger.warning("Starting in degraded mode — token(s) invalid")
+        else:
+            self.degraded = False
 
         self.project_root = project_root or os.environ.get(
             "PROJECT_ROOT_DIR", "/tmp/mltf-experiments"

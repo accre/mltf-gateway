@@ -8,7 +8,17 @@ jwks_url = OAUTH2_CONFIG["jwks_url"]
 issuer = OAUTH2_CONFIG["issuer"]
 audience = OAUTH2_CONFIG["client_id"]
 
-jwks_client = PyJWKClient(jwks_url)
+jwks_client = None
+
+
+def get_jwks_client():
+    global jwks_client
+    if jwks_client is None:
+        try:
+            jwks_client = PyJWKClient(jwks_url)
+        except Exception as e:
+            abort(401, description=f"Failed to load JWKS from {jwks_url}: {e}")
+    return jwks_client
 
 
 def decode(token):
@@ -16,7 +26,8 @@ def decode(token):
     Validate and decode a JWT access token locally.
     """
     try:
-        signing_key = jwks_client.get_signing_key_from_jwt(token)
+        client = get_jwks_client()
+        signing_key = client.get_signing_key_from_jwt(token)
         payload = jwt.decode(
             token,
             signing_key.key,

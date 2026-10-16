@@ -1,12 +1,15 @@
 import copy
 import logging
 import os
+import sys
+import time
 
 from dotenv import load_dotenv
 from flask import Flask, render_template, g, session, jsonify
 from flask_login import login_required
 
 import mltf_gateway.server.constants as constants
+from ..executors.ssam_executor import get_jwt_expiration
 from .api_views.gateway_api import gateway_api_bp
 from .api_views.token_api import token_api_bp
 from .extensions import db, login_manager
@@ -38,8 +41,42 @@ def init_routes(app):
 
     @app.route("/healthz")
     def health():
-        executor_status = app.extensions["mltf_gateway"].get_health()
-        return jsonify({"status": "ok", "executor_status": executor_status}), 200
+        executor = app.extensions["mltf_gateway"]
+        executor_status = executor.get_health()
+
+        # Find nearest token expiration
+        nearest_expiry = None
+        for token_name, token_obj in [
+            ("auth", executor.executor._auth_token),
+            ("slurm", executor.executor._slurm_token)
+        ]:
+            if token_obj.token:
+                try:
+                    exp = get_jwt_expiration(token_obj.token)
+                    if exp > 0:
+                        if nearest_expiry is None or exp < nearest_expiry[1]:
+                            nearest_expiry = (token_name, exp)
+                except Exception:
+                    pass
+
+        health_response = {
+            "executor_status": executor_status
+        }
+
+        if nearest_expiry:
+            health_response["nearest_token_expires_at"] = nearest_expiry[1]
+            health_response["nearest_token_name"] = nearest_expiry[0]
+            health_response["nearest_token_minutes_remaining"] = int(
+                (nearest_expiry[1] - time.time()) / 60
+            )
+
+        if executor.executor.degraded:
+            health_response["status"] = "degraded"
+            health_response["message"] = "Gateway running in degraded mode — tokens invalid"
+            return jsonify(health_response), 503
+
+        health_response["status"] = "ok"
+        return jsonify(health_response), 200
 
     @app.route("/")
     @login_required
@@ -97,7 +134,15 @@ def create_app():
         app.extensions = {}
 
     executor_name = os.environ.get("MLTF_EXECUTOR", "ssam")
-    app.extensions["mltf_gateway"] = GatewayServer(executor_name=executor_name)
+    try:
+        app.extensions["mltf_gateway"] = GatewayServer(executor_name=executor_name)
+    except ValueError as e:
+        logger.error(f"Failed to start gateway: {e}")
+        sys.exit(1)
+
+    if app.extensions["mltf_gateway"].executor.degraded:
+        logger.warning("Gateway running in degraded mode")
+
     init_routes(app)
 
     with app.app_context():
