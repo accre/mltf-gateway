@@ -207,12 +207,22 @@ class SSAMExecutor(ExecutorBase):
         auth_has_token = bool(self._auth_token.token or self._auth_token.token_path)
         slurm_has_token = bool(self._slurm_token.token or self._slurm_token.token_path)
 
-        if auth_has_token and not self._auth_token.valid and not self._auth_token.token_path:
+        if (
+            auth_has_token
+            and not self._auth_token.valid
+            and not self._auth_token.token_path
+        ):
             raise ValueError("Auth token is invalid and no token path provided")
-        if slurm_has_token and not self._slurm_token.valid and not self._slurm_token.token_path:
+        if (
+            slurm_has_token
+            and not self._slurm_token.valid
+            and not self._slurm_token.token_path
+        ):
             raise ValueError("Slurm token is invalid and no token path provided")
 
-        if (auth_has_token and not self._auth_token.valid) or (slurm_has_token and not self._slurm_token.valid):
+        if (auth_has_token and not self._auth_token.valid) or (
+            slurm_has_token and not self._slurm_token.valid
+        ):
             self.degraded = True
             logger.warning("Starting in degraded mode — token(s) invalid")
         else:

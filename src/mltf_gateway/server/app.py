@@ -48,7 +48,7 @@ def init_routes(app):
         nearest_expiry = None
         for token_name, token_obj in [
             ("auth", executor.executor._auth_token),
-            ("slurm", executor.executor._slurm_token)
+            ("slurm", executor.executor._slurm_token),
         ]:
             if token_obj.token:
                 try:
@@ -59,9 +59,7 @@ def init_routes(app):
                 except Exception:
                     pass
 
-        health_response = {
-            "executor_status": executor_status
-        }
+        health_response = {"executor_status": executor_status}
 
         if nearest_expiry:
             health_response["nearest_token_expires_at"] = nearest_expiry[1]
@@ -72,7 +70,9 @@ def init_routes(app):
 
         if executor.executor.degraded:
             health_response["status"] = "degraded"
-            health_response["message"] = "Gateway running in degraded mode — tokens invalid"
+            health_response["message"] = (
+                "Gateway running in degraded mode — tokens invalid"
+            )
             return jsonify(health_response), 503
 
         health_response["status"] = "ok"

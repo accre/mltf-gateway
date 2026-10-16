@@ -1,15 +1,8 @@
 import time
-from dataclasses import dataclass, field
 
 from mlflow.projects import SubmittedRun
 from sqlalchemy import event
-from sqlalchemy.orm import (
-    DeclarativeBase,
-    Mapped,
-    MappedAsDataclass,
-    mapped_column,
-    composite,
-)
+from sqlalchemy.orm import Mapped, mapped_column
 from mltf_gateway.server.extensions import db
 from mltf_gateway.data_classes import GatewayRunDescription
 from mltf_gateway.server.utils import TextPickleType
@@ -26,18 +19,22 @@ class TaskDescription(db.Model):
     __tablename__ = "runs"
 
     db_idx: Mapped[int] = db.mapped_column(
-        primary_key=True, init=False, autoincrement=True, nullable=False
+        primary_key=True, autoincrement=True, nullable=False
     )
     run_desc: Mapped[GatewayRunDescription] = db.mapped_column(TextPickleType())
     submitted_run: Mapped[SubmittedRun] = db.mapped_column(TextPickleType())
     gateway_id: Mapped[str] = db.mapped_column()
-    creation_time: Mapped[int] = db.mapped_column(init=False)
-    user_subject: Mapped[str] = db.mapped_column(init=False)
+    creation_time: Mapped[int] = db.mapped_column()
+    user_subject: Mapped[str] = db.mapped_column()
     status: Mapped[str] = db.mapped_column(default="SCHEDULED")
 
-    def __post_init__(self):
+    def __init__(self, run_desc, submitted_run, gateway_id):
+        self.run_desc = run_desc
+        self.submitted_run = submitted_run
+        self.gateway_id = gateway_id
         self.creation_time = int(time.time())
-        self.user_subject = self.run_desc.user_subject
+        self.user_subject = run_desc.user_subject
+        self.status = "SCHEDULED"
 
     @property
     def name(self) -> str:
