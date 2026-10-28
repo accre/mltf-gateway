@@ -131,7 +131,8 @@ elif command -v apptainer >&/dev/null; then
     --no-mount tmp,cwd,home \
     --pid \
     --env MLFLOW_ENV_ROOT=/tmp/venvs \
-    -B /cvmfs/:/cvmfs:ro \
+    -B /cvmfs \
+    -B /data:/data:ro \
     -B /cms:/cms:ro \
     -B /lfs_roots:/lfs_roots:ro \
     -B "${tempdir}":/tmp/:rw \
