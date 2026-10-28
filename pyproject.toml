@@ -38,6 +38,7 @@ dependencies = [
     "jsonpickle",
     "keyring>=20.0.0",
     "mlflow-skinny",
+    "psycopg",
     "pycryptodome",
     "python-dotenv",
     "requests",
