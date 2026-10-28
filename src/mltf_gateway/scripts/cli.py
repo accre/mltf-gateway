@@ -20,7 +20,7 @@ from mltf_gateway.client.oauth import (
     get_access_token,
     get_stored_credentials,
     is_authenticated,
-    logout,
+    logout as oauth_logout,
     token_expired,
 )
 from mltf_gateway.utils import get_tracking_uri
@@ -272,7 +272,7 @@ def login(ctx):
 @click.pass_context
 def logout(ctx):
     """Logout from MLTF Gateway"""
-    logout()
+    oauth_logout()
     click.echo("Logged out successfully.")
 
 
