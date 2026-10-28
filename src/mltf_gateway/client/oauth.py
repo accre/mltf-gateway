@@ -126,8 +126,11 @@ def get_oidc_config(gateway_uri):
                     print(f"Warning: OIDC discovery failed: {e}")
                     print("  Using server-provided endpoints from gateway config.")
 
-            # Use server-provided endpoints if available
-            if "device_authorization_endpoint" in gw_config:
+            # Use server-provided endpoints if available and not already
+            # resolved via discovery (discovery takes precedence)
+            if "device_authorization_endpoint" in gw_config and (
+                "device_authorization_endpoint" not in oidc_config
+            ):
                 oidc_config["device_authorization_endpoint"] = gw_config[
                     "device_authorization_endpoint"
                 ]
